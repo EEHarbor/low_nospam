@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:ee_addon="http://newism.com.au/nsm_addon_updater/#rss-xml">
+	<channel>
+		<title>CP Analytics Changelog</title>
+		<link>http://github.com/lodewijk/low.nospam.ee2_addon/raw/master/versions.xml</link>
+		<description>Most recent changes with links to updates.</description>
+		<item>
+			<title>Version 2.1.0</title>
+			<ee_addon:version>2.1.0</ee_addon:version>
+			<link>http://github.com/lodewijk/low.nospam.ee2_addon/tree/2.1.0</link>
+			<pubDate>Fri, 26 Feb 2010 01:43:00 +0000</pubDate>
+			<description><![CDATA[
+				<ul>
+					<li>Added NSM Addon Updater integration</li>
+				</ul>
+			]]>
+			</description>
+			<enclosure url="https://github.com/amphibian/cp_analytics.ee_addon/zipball/2.1.0" length="18407" type="application/zip" />
+		 </item>
+	</channel>
+</rss>
