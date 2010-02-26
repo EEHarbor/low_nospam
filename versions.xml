@@ -8,14 +8,14 @@
 			<title>Version 2.1.0</title>
 			<ee_addon:version>2.1.0</ee_addon:version>
 			<link>http://github.com/lodewijk/low.nospam.ee2_addon/tree/2.1.0</link>
-			<pubDate>Fri, 26 Feb 2010 01:43:00 +0000</pubDate>
+			<pubDate>Fri, 26 Feb 2010 02:09:00 +0000</pubDate>
 			<description><![CDATA[
 				<ul>
 					<li>Added NSM Addon Updater integration</li>
 				</ul>
 			]]>
 			</description>
-			<enclosure url="https://github.com/amphibian/cp_analytics.ee_addon/zipball/2.1.0" length="18407" type="application/zip" />
+			<enclosure url="https://github.com/lodewijk/low.nospam.ee2_addon/zipball/2.1.0" length="14635" type="application/zip" />
 		 </item>
 	</channel>
 </rss>
