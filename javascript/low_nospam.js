@@ -2,7 +2,7 @@
 * Low NoSpam JavaScript file
 *
 * @package			low-nospam-ee2_addon
-* @version			2.0.0
+* @version			2.1.0
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -14,9 +14,9 @@ $(function(){
 	// Delete/open them afterwards, using another Ajax call
 
 	$('#low_form').submit(function(e){
-		
+
 		e.preventDefault();
-		
+
 		// define variables
 		var action = $(this).attr('action'),
 			next_action = $(this).attr('action').replace('addons_modules', 'content_edit'),
@@ -29,13 +29,13 @@ $(function(){
 		$('#low_form tbody input[type=checkbox]:checked').each(function(){
 			comment_ids.push($(this).val().replace('c',''));
 		});
-		
+
 		// No comments checked? Bail with EE error notice
 		if (!comment_ids.length) {
 			$.ee_notice($.LOW.Lang.line('no_comments'),{type:'error'});
 			return false;
 		}
-		
+
 		// Either delete or open comments -- build appropriate URL and POST data to match
 		if (as == 'spam') {
 			next_action = next_action.replace(/show_module_cp.+/,'delete_comment');
@@ -44,7 +44,7 @@ $(function(){
 			next_action = next_action.replace(/show_module_cp.+/,'modify_comments');
 			next_post_data += '&action=open';
 		}
-		
+
 		// Show status using ee_notice, and show ajax indicator, disable form button to prevent double clicks
 		$.ee_notice($.LOW.Lang.line('marking_as_'+as),{type:'custom',open:true});
 		$('#filter_ajax_indicator').css('visibility','visible');

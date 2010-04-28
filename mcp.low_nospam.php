@@ -4,14 +4,13 @@
 * Low NoSpam MCP class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.0.0
+* @version			2.1.0
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
 */
-
 class Low_nospam_mcp {
-	
+
 	var $settings	= FALSE;
 
 	// --------------------------------------------------------------------
@@ -25,9 +24,9 @@ class Low_nospam_mcp {
 	{
 		$this->__construct();
 	}
-	
+
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* PHP 5 Constructor
 	*
@@ -38,15 +37,15 @@ class Low_nospam_mcp {
 		/** -------------------------------------
 		/**  Get global instance
 		/** -------------------------------------*/
-		
+
 		$this->EE =& get_instance();
-		
+
 		// module url homepage
 		$this->mod_url = $this->data['mod_url'] = 'C=addons_modules'.AMP.'M=show_module_cp'.AMP.'module=low_nospam';
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Home screen for module
 	*
@@ -58,10 +57,10 @@ class Low_nospam_mcp {
 		$this->EE->load->library('javascript');
 		$this->EE->load->library('low_nospam');
 		$this->EE->cp->load_package_js('low_nospam');
-		
+
 		// Set page title
 		$this->EE->cp->set_variable('cp_page_title', $this->EE->lang->line('low_nospam_module_name'));
-		
+
 		/** -------------------------------------
 		/**  Get closed comments
 		/** -------------------------------------*/
@@ -73,17 +72,17 @@ class Low_nospam_mcp {
 		$this->EE->db->where('c.site_id', $this->EE->config->item('site_id'));
 		$this->EE->db->order_by('c.comment_date', 'desc');
 		$query = $this->EE->db->get();
-		
+
 		$this->data['comments'] = $query->result_array();
 		$this->data['total_results'] = $query->num_rows();
-		
+
 		// if there are closed comments, start building output
 		if ( ! empty($this->data['comments']) )
 		{
 			// Load some libs/helpers/language files
 			$this->EE->load->library('table');
 			$this->EE->load->helper('form');
-			
+
 			// toggle stuff
 			$this->EE->javascript->output(array(
 					'$("input#togglebox").toggle(
@@ -98,7 +97,7 @@ class Low_nospam_mcp {
 						}
 					);')
 			);
-			
+
 			$js_lang =<<<EOJS
 				if (typeof $.LOW == 'undefined') $.LOW = new Object;
 
@@ -125,15 +124,15 @@ EOJS;
 				$this->EE->lang->line('opening'),
 				$this->EE->lang->line('done')
 			)));
-			
+
 			$this->EE->javascript->compile();
 		}
-			
+
 		return $this->EE->load->view('index', $this->data, TRUE);
 	}
-	
+
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Mark closed comments as Spam or Ham, using the service stored in the extension settings
 	*
@@ -143,10 +142,10 @@ EOJS;
 	{
 		// Get settings fist, so we know what service to call
 		$this->_get_extension_settings();
-		
+
 		// Initiate library class
 		$this->EE->load->library('low_nospam');
-		
+
 		// Set service and api key
 		if ( !$this->EE->low_nospam->set_service($this->settings['service'], $this->settings['api_key']))
 		{
@@ -156,18 +155,18 @@ EOJS;
 
 		// Spam or Ham?
 		$as = $this->EE->input->post('mark_as');
-		
+
 		// Get selected comments
 		$comments = $this->EE->db->escape_str($this->EE->input->post('toggle', array()));
-		
+
 		// Comment count
 		$i = 0;
-		
+
 		if ( empty($comments) )
 		{
 			$this->EE->functions->redirect(BASE.AMP.$this->mod_url);
 		}
-		
+
 		// compose where part of query
 		$sql_where = "comment_id IN ('".str_replace('c', '', implode("','", $comments))."')";
 
@@ -184,10 +183,10 @@ EOJS;
 				{$sql_where}
 		";
 		$query = $this->EE->db->query($sql);
-		
+
 		// Ham or Spam?
 		$method = ($as == 'spam') ? 'mark_as_spam' : 'mark_as_ham';
-		
+
 		// send each one to service
 		foreach ($query->result_array() AS $row)
 		{
@@ -196,13 +195,13 @@ EOJS;
 				$i++;
 			}
 		}
-		
+
 		// then return if Ajax-request
 		die ( (string) $i );
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Retrieve and store the Extension settings
 	*
@@ -215,14 +214,14 @@ EOJS;
 		$this->EE->db->where('class', 'Low_nospam_ext');
 		$this->EE->db->limit(1);
 		$query = $this->EE->db->get();
-		
+
 		if ($query->num_rows)
 		{
 			$row = $query->row_array();
 			$this->settings = unserialize($row['settings']);
 		}
 	}
-	
+
 	// --------------------------------------------------------------------
 
 }

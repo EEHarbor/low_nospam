@@ -4,7 +4,7 @@
 * Low NoSpam Language file
 *
 * @package			low-nospam-ee2_addon
-* @version			2.0.0b1
+* @version			2.1.0
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -136,6 +136,25 @@ $lang = array(
 
 "done" =>
 "All done!",
+
+// Accessory lines
+
+"closed_comments_one" =>
+"There is currently one closed comment",
+
+"closed_comments_many" =>
+"There are currently one %s closed comments",
+
+"go_moderate" =>
+"Go to the Low NoSpam module to moderate",
+
+//----------------------------------------
+
+"donate_url" =>
+"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=low%40loweblog%2ecom&amp;item_name=Low%20NoSpam&amp;no_shipping=1&amp;cn=Optional%20remark&amp;tax=0&amp;currency_code=EUR&amp;lc=US&amp;bn=PP%2dDonationsBF&amp;charset=UTF%2d8",
+
+"donate_link" =>
+"Support Low NoSpam by donating!",
 
 //----------------------------------------
 

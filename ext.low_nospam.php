@@ -4,7 +4,7 @@
 * Low NoSpam Extension class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.0.0
+* @version			2.1.0
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -30,7 +30,7 @@ class Low_nospam_ext
 	*
 	* @var	string
 	*/
-	var $version = '2.0.0';
+	var $version = '2.1.0';
 
 	/**
 	* Extension description
@@ -45,7 +45,7 @@ class Low_nospam_ext
 	* @var	bool
 	*/
 	var $settings_exist = TRUE;
-	
+
 	/**
 	* Documentation link
 	*
@@ -59,7 +59,7 @@ class Low_nospam_ext
 	* @var	string
 	*/
 	var $versions_xml = 'http://loweblog.com/software/low-nospam/feed/';	
-	
+
 	/**
 	* Default settings
 	*
@@ -75,14 +75,14 @@ class Low_nospam_ext
 		'check_wiki_articles' => 'n',
 		'moderate_if_unreachable' => 'y'
 	);
-	
+
 	/**
 	* Error message line
 	*
 	* @var	string
 	*/
 	var $error = '';
-	
+
 	// --------------------------------------------------------------------
 
 	/**
@@ -108,13 +108,13 @@ class Low_nospam_ext
 		/** -------------------------------------
 		/**  Get global instance
 		/** -------------------------------------*/
-	
+
 		$this->EE =& get_instance();
 
 		/** -------------------------------------
 		/**  Load Low NoSpam Library
 		/** -------------------------------------*/
-		
+
 		$this->EE->load->add_package_path(PATH_THIRD.'low_nospam/');
 		$this->EE->load->library('low_nospam');
 
@@ -123,7 +123,7 @@ class Low_nospam_ext
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Settings
 	*
@@ -134,9 +134,9 @@ class Low_nospam_ext
 		/** -------------------------------------
 		/**  Get Services from library file
 		/** -------------------------------------*/
-	
+
 		$services = array();
-		
+
 		foreach(array_keys($this->EE->low_nospam->services) AS $key)
 		{
 			$services[$key] = $key;
@@ -145,7 +145,7 @@ class Low_nospam_ext
 		/** -------------------------------------
 		/**  Get member groups from DB
 		/** -------------------------------------*/
-		
+
 		$this->EE->db->select('group_id, group_title');
 		$this->EE->db->order_by('group_title', 'asc');
 		$query = $this->EE->db->get('exp_member_groups');
@@ -154,7 +154,7 @@ class Low_nospam_ext
 		{
 			$groups[$row->group_id] = $row->group_title;
 		}
-		
+
 		/** -------------------------------------
 		/**  Compose settings array
 		/** -------------------------------------*/
@@ -171,21 +171,21 @@ class Low_nospam_ext
 		/**  Is Forum installed?
 		/** -------------------------------------*/
 
-		$this->EE->db->where('module_name', 'Forums');
+		$this->EE->db->where('module_name', 'Forum');
 		$this->EE->db->from('exp_modules');
 
 		if ($this->EE->db->count_all_results())
 		{
 			$settings['check_forum_posts'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_forum_posts']);
 		}
-		
+
 		/** -------------------------------------
 		/**  Is wiki installed?
 		/** -------------------------------------*/
-		
+
 		$this->EE->db->where('module_name', 'Wiki');
 		$this->EE->db->from('exp_modules');
-		
+
 		if ($this->EE->db->count_all_results())
 		{
 			$settings['check_wiki_articles'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_wiki_articles']);
@@ -194,14 +194,14 @@ class Low_nospam_ext
 		/** -------------------------------------
 		/**  Final settings value(s)
 		/** -------------------------------------*/
-		
+
 		$settings['moderate_if_unreachable'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['moderate_if_unreachable']);
 
 		return $settings;
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Check incoming comment, exits if it's spam
 	*
@@ -216,11 +216,11 @@ class Low_nospam_ext
 
 		if ($this->settings['check_comments'] == 'y' AND $this->_check_user())
 		{
-			
+
 			/** -------------------------------------
 			/**  Array to check
 			/** -------------------------------------*/
-			
+
 			$comment = array(
 				'comment_author'		=> $data['name'],
 				'comment_author_email'	=> $data['email'],
@@ -236,7 +236,7 @@ class Low_nospam_ext
 				/**  discard message (exit without saving)
 				/**  or save closed comment
 				/** -------------------------------------*/
-				
+
 				if ($this->settings['discard_comments'] == 'y')
 				{
 					$this->error = 'input_discarded';
@@ -255,18 +255,18 @@ class Low_nospam_ext
 						$this->error = 'input_is_spam';
 					}
 				}
-				
+
 				// abort script
 				$this->abort();
 			}
 		}
-		
+
 		// return data as if nothing happened...
 		return $data;
 	}
-	
+
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Check incoming forum post, exit if it's spam
 	*
@@ -276,7 +276,7 @@ class Low_nospam_ext
 	function forum_submit_post_start($obj)
 	{
 		// check settings to see if trackback needs to be verified
-		if ($this->settings['check_forum_posts'] == 'y' AND $this->_check_user())
+		if (isset($this->settings['check_forum_posts']) AND $this->settings['check_forum_posts'] == 'y' AND $this->_check_user())
 		{
 			// input array
 			$this->input = array(
@@ -296,7 +296,7 @@ class Low_nospam_ext
 				{
 					$this->error = 'input_discarded';
 				}
-				
+
 				// No forum post moderation, so just exit
 				$this->abort();
 			}
@@ -304,7 +304,7 @@ class Low_nospam_ext
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Check incoming wiki article, exit if it's spam
 	*
@@ -314,7 +314,7 @@ class Low_nospam_ext
 	function edit_wiki_article_end($obj, $query)
 	{
 		// check settings to see if comment needs to be verified
-		if ($this->settings['check_wiki_articles'] == 'y' AND $this->_check_user())
+		if (isset($this->settings['check_wiki_articles']) AND $this->settings['check_wiki_articles'] == 'y' AND $this->_check_user())
 		{
 			$this->input = array(
 				'user_ip'				=> $this->EE->input->ip_address(),
@@ -324,14 +324,14 @@ class Low_nospam_ext
 				'comment_author_url'	=> $this->EE->session->userdata['url'],
 				'comment_content'		=> $this->EE->input->post('title').' '.$this->EE->input->post('article_content')
 			);
-			
+
 			// Check it!
 			if ($this->is_spam())
 			{
 				// HANDLE WIKI ARTICLE SPAM
 				$wiki_id = $obj->wiki_id;
 				$page_id = $this->EE->db->escape_str($query->row['page_id']);
-				
+
 				// get real last revision id
 				$query  = $this->EE->db->query("SELECT last_revision_id FROM exp_wiki_page WHERE wiki_id = {$wiki_id} AND page_id = {$page_id}");
 				$row    = $query->row_array(); 
@@ -339,7 +339,7 @@ class Low_nospam_ext
 
 				// close revision
 				$this->EE->db->query("UPDATE exp_wiki_revisions SET revision_status = 'closed' WHERE wiki_id = {$wiki_id} AND page_id = {$page_id} AND revision_id = {$rev_id}");
-				
+
 				$this->abort();
 			}
 		}
@@ -360,24 +360,24 @@ class Low_nospam_ext
 			$this->error = 'service_not_found';
 			$this->abort();
 		}
-	
+
 		// check connectivity
 		if ( ! $this->EE->low_nospam->is_available() )
 		{
 			$this->error = 'service_unreachable';
 			return ($this->settings['moderate_if_unreachable'] == 'y');
 		}
-	
+
 		// check api key
 		if ( ! $this->EE->low_nospam->key_is_valid() )
 		{
 			$this->error = 'invalid_api_key';
 			$this->abort();
 		}
-	
+
 		// set data to check
 		$this->EE->low_nospam->prep_data($array);
-	
+
 		// get verdict
 		return $this->EE->low_nospam->is_spam();
 	}
@@ -396,7 +396,7 @@ class Low_nospam_ext
 
 		// get error msg
 		$line = ($msg) ? $msg : $this->error;
-		
+
 		// show error message
 		$this->EE->output->show_user_error('submission', $this->EE->lang->line($line));
 		exit;
@@ -426,7 +426,7 @@ class Low_nospam_ext
 		{
 			$do_check = TRUE;
 		}
-		
+
 		return $do_check;
 	}
 
@@ -445,7 +445,7 @@ class Low_nospam_ext
 			'forum_submit_post_start',
 			'edit_wiki_article_end'
 		);
-		
+
 		// insert hooks and methods
 		foreach ($hooks AS $hook)
 		{
@@ -459,13 +459,13 @@ class Low_nospam_ext
 				'enabled'	=> 'y',
 				'settings'	=> serialize($this->default_settings)
 			);
-	
+
 			// insert in database
 			$this->EE->db->insert('exp_extensions', $data);
 		}
-		
+
 	}
- 
+
 	// --------------------------------------------------------------------
 
 	/**
@@ -480,10 +480,10 @@ class Low_nospam_ext
 		{
 			return FALSE;
 		}
-	
+
 		// init data array
 		$data = array();
-	
+
 		// Add version to data array
 		$data['version'] = $this->version;
 

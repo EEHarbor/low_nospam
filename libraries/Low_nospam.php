@@ -4,12 +4,11 @@
 * Low NoSpam Library class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.0.0
+* @version			2.1.0
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
 */
-
 class Low_nospam
 {
 	/**
@@ -18,35 +17,35 @@ class Low_nospam
 	* @var	array
 	*/
 	var $api = array();
-	
+
 	/**
 	* Selected API key
 	*
 	* @var	string
 	*/
 	var $api_key = '';
-	
+
 	/**
 	* Data to check
 	*
 	* @var	array
 	*/
 	var $data = array();
-	
+
 	/**
 	* Connection pointer
 	*
 	* @var	array
 	*/
 	var $connection;
-	
+
 	/**
 	* NoSpam services
 	*
 	* @var	array
 	*/
 	var $services = array(
-		
+
 		// Akismet details
 		'akismet' => array(
 			'name'		=> 'Akismet',
@@ -54,7 +53,7 @@ class Low_nospam
 			'host'		=> 'rest.akismet.com',
 			'port'		=> 80
 		),
-		
+
 		// TypePad AntiSpam details
 		'tpas' => array(
 			'name'		=> 'TypePad AntiSpam',
@@ -62,11 +61,11 @@ class Low_nospam
 			'host'		=> 'api.antispam.typepad.com',
 			'port'		=> 80
 		)
-	
+
 		// Maybe even more in the future?
 		// They'd have to be compatible with the Akismet API, just like TypePad is...
 	);
-	
+
 	/**
 	* Unnecessary $_SERVER variables
 	*
@@ -99,9 +98,9 @@ class Low_nospam
 	{
 		$this->__construct();
 	}
-	
+
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* PHP 5 Constructor
 	*
@@ -112,12 +111,12 @@ class Low_nospam
 		/** -------------------------------------
 		/**  Get global instance
 		/** -------------------------------------*/
-		
+
 		$this->EE =& get_instance();
-		
+
 		// set user agent
 		$this->user_agent = APP_NAME.'/'.APP_VER;
-		
+
 		// set site url
 		$this->site_url = $this->EE->config->item('site_url');
 
@@ -129,7 +128,7 @@ class Low_nospam
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Set service and api key
 	*
@@ -148,9 +147,9 @@ class Low_nospam
 			return FALSE;
 		}
 	}
-	
+
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Connect to service
 	*
@@ -162,7 +161,7 @@ class Low_nospam
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Close connection to the service
 	*
@@ -174,7 +173,7 @@ class Low_nospam
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Check if service is available
 	*
@@ -194,7 +193,7 @@ class Low_nospam
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Communicate with service
 	*
@@ -220,30 +219,30 @@ class Low_nospam
 
 			// Initiate response
 			$response = '';
-			
+
 			@fwrite($this->connection, $request);
-	
+
 			while (!feof($this->connection))
 			{
 				$response .= @fgets($this->connection, $response_length);
 			}
-	
+
 			$response = explode("\r\n\r\n", $response, 2);
 			$res = $response[1];
 			$this->disconnect();
 		}
 		else
 		{
-			
+
 			$res = FALSE;
 		}
-		
+
 		// return the response or FALSE
 		return $res;
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Compose query string from $_SERVER vars and $this->data
 	*
@@ -261,7 +260,7 @@ class Low_nospam
 					$this->data[$key] = $value;
 				}
 			}
-			
+
 		}
 
 		// initiate query string
@@ -275,9 +274,9 @@ class Low_nospam
 
 		return $query_string;
 	}
-	
+
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Prepare $this->data, make sure required data is present:
 	* http://akismet.com/development/api/#comment-check
@@ -288,25 +287,25 @@ class Low_nospam
 	function prep_data($data)
 	{
 		$this->data = $data;
-		
+
 		// blog (required)
 		if (!isset($this->data['blog']) || empty($this->data['blog']))
 		{
 			$this->data['blog'] = $this->site_url;
 		}
-		
+
 		// user_ip (required)
 		if (!isset($this->data['user_ip']) || empty($this->data['user_ip']))
 		{
 			$this->data['user_ip'] = $this->EE->input->ip_address();
 		}
-		
+
 		// user_agent (required)
 		if (!isset($this->data['user_agent']) || empty($this->data['user_agent']))
 		{
 			$this->data['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 		}
-		
+
 		// referrer (not required but useful to add anyway)
 		if (!isset($this->data['referrer']) || empty($this->data['referrer']))
 		{
@@ -315,7 +314,7 @@ class Low_nospam
 	}
 
 	// --------------------------------------------------------------------
-	
+
 	/**
 	* Verify API key
 	*
@@ -324,10 +323,10 @@ class Low_nospam
 	function key_is_valid()
 	{
 		$key_check = $this->get_response("key={$this->api_key}&blog={$this->site_url}", 'verify-key');
-			
+
 		return ($key_check == 'valid');
 	}
-	
+
 	// --------------------------------------------------------------------
 
 	/**
@@ -338,7 +337,7 @@ class Low_nospam
 	function is_spam()
 	{
 		$response = $this->get_response($this->get_query_string(), 'comment-check');
-		
+
 		return ($response == 'true');
 	}
 
@@ -355,7 +354,7 @@ class Low_nospam
 		{
 			$this->data = $comment;
 		}
-		
+
 		return $this->get_response($this->get_query_string(FALSE), 'submit-spam');
 	}
 
@@ -372,7 +371,7 @@ class Low_nospam
 		{
 			$this->data = $comment;
 		}
-		
+
 		return $this->get_response($this->get_query_string(FALSE), 'submit-ham');
 	}
 
