@@ -4,7 +4,7 @@
 * Low NoSpam Language file
 *
 * @package			low-nospam-ee2_addon
-* @version			2.1.0
+* @version			2.1.1
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -90,17 +90,14 @@ $lang = array(
 "check_members" =>
 "Member groups to check",
 
-"check_trackbacks" =>
-"Check trackbacks?",
-
 "check_forum_posts" =>
 "Check forum posts?",
 
-"check_gallery_comments" =>
-"Check gallery comments?",
-
 "check_wiki_articles" =>
 "Check wiki articles?",
+
+"check_member_registrations" =>
+"Check member registrations?",
 
 "moderate_if_unreachable" =>
 "Catch comments if service is unreachable?",

@@ -4,7 +4,7 @@
 * Low NoSpam MCP class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.1.0
+* @version			2.1.1
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/

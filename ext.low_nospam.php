@@ -4,7 +4,7 @@
 * Low NoSpam Extension class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.1.0
+* @version			2.1.1
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -30,7 +30,7 @@ class Low_nospam_ext
 	*
 	* @var	string
 	*/
-	var $version = '2.1.0';
+	var $version = '2.1.1';
 
 	/**
 	* Extension description
@@ -73,6 +73,7 @@ class Low_nospam_ext
 		'discard_comments' => 'n',
 		'check_forum_posts' => 'n',
 		'check_wiki_articles' => 'n',
+		'check_member_registrations' => 'n',
 		'moderate_if_unreachable' => 'y'
 	);
 
@@ -195,6 +196,7 @@ class Low_nospam_ext
 		/**  Final settings value(s)
 		/** -------------------------------------*/
 
+		$settings['check_member_registrations'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_member_registrations']);
 		$settings['moderate_if_unreachable'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['moderate_if_unreachable']);
 
 		return $settings;
@@ -270,8 +272,8 @@ class Low_nospam_ext
 	/**
 	* Check incoming forum post, exit if it's spam
 	*
-	* @param	array
-	* @return	array
+	* @param	object
+	* @return	void
 	*/
 	function forum_submit_post_start($obj)
 	{
@@ -308,8 +310,9 @@ class Low_nospam_ext
 	/**
 	* Check incoming wiki article, exit if it's spam
 	*
-	* @param	array
-	* @return	array
+	* @param	object
+	* @param	string
+	* @return	void
 	*/
 	function edit_wiki_article_end($obj, $query)
 	{
@@ -348,12 +351,70 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
+	* Check incoming wiki article, exit if it's spam
+	*
+	* @return	void
+	*/
+	function member_member_register_start()
+	{
+		// check settings to see if comment needs to be verified
+		if (isset($this->settings['check_member_registrations']) AND $this->settings['check_member_registrations'] == 'y' AND $this->_check_user())
+		{
+			// Don't send these values to the service
+			$ignore = array('password', 'password_confirm', 'rules', 'email' , 'url', 'username',
+							'XID', 'ACT', 'RET', 'FROM', 'site_id', 'accept_terms');
+
+			// Init content var
+			$content = '';
+
+			// Loop through posted data, add to content var
+			foreach ($_POST AS $key => $val)
+			{
+				if (in_array($key, $ignore)) continue;
+
+				$content .= $val . "\n";
+			}
+
+			$this->input = array(
+				'user_ip'				=> $this->EE->input->ip_address(),
+				'user_agent'			=> $this->EE->session->userdata['user_agent'],
+				'comment_author'		=> $this->EE->input->post('username'),
+				'comment_author_email'	=> $this->EE->input->post('email'),
+				'comment_author_url'	=> $this->EE->input->post('url'),
+				'comment_content'		=> $content
+			);
+
+			// Check it!
+			if ($this->is_spam())
+			{
+				// Set error message if not already set
+				if ( ! $this->error )
+				{
+					$this->error = 'input_discarded';
+				}
+
+				// Exit if spam
+				$this->abort();
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
 	* Checks if given array is a spammy one
 	*
+	* @param	array
 	* @return	bool
 	*/
-	function is_spam($array)
+	function is_spam($array = array())
 	{
+		// Fallback
+		if (empty($array) && isset($this->input))
+		{
+			$array = $this->input;
+		}
+
 		// initiate nospam lib
 		if ( ! $this->EE->low_nospam->set_service($this->settings['service'], $this->settings['api_key']) )
 		{
@@ -387,6 +448,7 @@ class Low_nospam_ext
 	/**
 	* Abort script and show user message
 	*
+	* @param	string
 	* @return	void
 	*/
 	function abort($msg = '')
@@ -443,7 +505,8 @@ class Low_nospam_ext
 		$hooks = array(
 			'insert_comment_insert_array',
 			'forum_submit_post_start',
-			'edit_wiki_article_end'
+			'edit_wiki_article_end',
+			'member_member_register_start'
 		);
 
 		// insert hooks and methods
@@ -479,6 +542,37 @@ class Low_nospam_ext
 		if ($current == '' OR $current == $this->version)
 		{
 			return FALSE;
+		}
+
+		// Upate to version 2.1.1
+		// - Add member registration check
+		if ($current < '2.1.1')
+		{
+			// Get current settings
+			$query = $this->EE->db->query("SELECT settings FROM exp_extensions WHERE class = '".get_class($this)."' LIMIT 1");
+			$row = $query->row();
+			$settings = unserialize($row->settings);
+
+			// Add new record to settings
+			$settings['check_member_registrations'] = 'n';
+			$new_settings = $this->EE->db->escape_str(serialize($settings));
+
+			// save new settings to DB
+			$this->EE->db->query("UPDATE exp_extensions SET settings = '{$new_settings}' WHERE class = '".get_class($this)."'");
+
+			// Add new hook
+			$this->EE->db->insert(
+				'exp_extensions', array(
+					'extension_id'	=> '',
+					'class'			=> get_class($this),
+					'method'		=> 'member_member_register_start',
+					'hook'			=> 'member_member_register_start',
+					'settings'		=> $new_settings,
+					'priority'		=> 1,
+					'version'		=> $this->version,
+					'enabled'		=> 'y'
+				)
+			); // end db->insert
 		}
 
 		// init data array
