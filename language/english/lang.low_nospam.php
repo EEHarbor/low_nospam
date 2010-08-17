@@ -140,7 +140,7 @@ $lang = array(
 "There is currently one closed comment",
 
 "closed_comments_many" =>
-"There are currently one %s closed comments",
+"There are currently %s closed comments",
 
 "go_moderate" =>
 "Go to the Low NoSpam module to moderate",
