@@ -69,6 +69,9 @@ $(function(){
 						$('#nospam_submit').attr('disabled','');
 					},
 					success: function(data, status2, xhr2) {
+						// Reload the page to play nice with pagination
+						window.location.href = window.location.href.replace(/rownum=\d+/, 'rownum=0');
+						/*
 						// Show done message, either from JSON result or a general one as backup
 						var msg = data.message_success || $.LOW.Lang.line('done');
 						$.ee_notice(msg,{type:'custom'});
@@ -81,6 +84,7 @@ $(function(){
 							$('#low_form').hide();
 							$('#low_no_comments').show();
 						}
+						*/
 					},
 					error: function(xhr2, status2, msg) {
 						$.ee_notice('An error occurred: '+status2+' '+msg, {type:'error'});

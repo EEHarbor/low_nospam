@@ -30,14 +30,20 @@
 	?>
 
 	<?=$this->table->generate()?>
+	
+	<div style="overflow:hidden">
 
-	<p style="text-align:right">
-		<select name="mark_as" id="mark_as">
-			<option value="spam"><?=lang('spam_and_delete')?></option>
-			<option value="ham"><?=lang('ham_and_open')?></option>
-		</select>
-		<?=form_submit(array('id' => 'nospam_submit', 'value' => lang('submit'), 'class' => 'submit'));?>
-	</p>
+		<p style="float:right;">
+			<select name="mark_as" id="mark_as">
+				<option value="spam"><?=lang('spam_and_delete')?></option>
+				<option value="ham"><?=lang('ham_and_open')?></option>
+			</select>
+			<?=form_submit(array('id' => 'nospam_submit', 'value' => lang('submit'), 'class' => 'submit'));?>
+		</p>
+
+		<?=$pagination?>
+
+	</div>
 
 	<?=form_close()?>
 
