@@ -4,7 +4,7 @@
 * Low NoSpam Extension class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.1.1
+* @version			2.1.2
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -30,7 +30,7 @@ class Low_nospam_ext
 	*
 	* @var	string
 	*/
-	var $version = '2.1.1';
+	var $version = '2.1.2';
 
 	/**
 	* Extension description
