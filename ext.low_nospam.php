@@ -1,10 +1,12 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
+// include config file
+include(PATH_THIRD.'low_nospam/config.php');
+
 /**
 * Low NoSpam Extension class
 *
 * @package			low-nospam-ee2_addon
-* @version			2.1.2
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -23,14 +25,14 @@ class Low_nospam_ext
 	*
 	* @var	string
 	*/
-	var $name = 'Low NoSpam';
+	var $name = LOW_NOSPAM_NAME;
 
 	/**
 	* Extension version
 	*
 	* @var	string
 	*/
-	var $version = '2.1.2';
+	var $version = LOW_NOSPAM_VERSION;
 
 	/**
 	* Extension description
@@ -51,14 +53,7 @@ class Low_nospam_ext
 	*
 	* @var	string
 	*/
-	var $docs_url = 'http://loweblog.com/software/low-nospam/';
-
-	/**
-	* NSM Addon Updater link
-	*
-	* @var	string
-	*/
-	var $versions_xml = 'http://loweblog.com/software/low-nospam/feed/';	
+	var $docs_url = LOW_NOSPAM_DOCS;
 
 	/**
 	* Default settings
@@ -66,15 +61,17 @@ class Low_nospam_ext
 	* @var	array
 	*/
 	var $default_settings = array(
-		'service'	=> 'akismet',
-		'api_key'	=> '',
-		'check_members'	=> array(2, 3, 4),
-		'check_comments' => 'y',
-		'discard_comments' => 'n',
-		'check_forum_posts' => 'n',
-		'check_wiki_articles' => 'n',
+		'service'                    => 'akismet',
+		'api_key'                    => '',
+		'check_members'              => array(2, 3, 4),
+		'check_comments'             => 'y',
+		'discard_comments'           => 'n',
+		'caught_comments'            => 'p',
+		'check_forum_posts'          => 'n',
+		'check_wiki_articles'        => 'n',
 		'check_member_registrations' => 'n',
-		'moderate_if_unreachable' => 'y'
+		'moderate_if_unreachable'    => 'y',
+		'zero_tolerance'             => 'n'
 	);
 
 	/**
@@ -106,35 +103,36 @@ class Low_nospam_ext
 	*/
 	function __construct($settings = FALSE)
 	{
-		/** -------------------------------------
-		/**  Get global instance
-		/** -------------------------------------*/
-
+		//  Get global instance
 		$this->EE =& get_instance();
 
-		/** -------------------------------------
-		/**  Load Low NoSpam Library
-		/** -------------------------------------*/
-
+		//  Load Low NoSpam Library
 		$this->EE->load->add_package_path(PATH_THIRD.'low_nospam/');
 		$this->EE->load->library('low_nospam');
+
+		// Set extension class name
+		$this->class_name = ucfirst(get_class($this));
 
 		// set settings
 		$this->settings = $settings;
 	}
-
+	
 	// --------------------------------------------------------------------
 
 	/**
-	* Settings
+	* Extension settings form
 	*
-	* @return	array
+	* @param	array
+	* @return	string
 	*/
-	function settings()
+	function settings_form($current)
 	{
-		/** -------------------------------------
-		/**  Get Services from library file
-		/** -------------------------------------*/
+		$this->EE->load->helper('form');
+		$this->EE->cp->load_package_js('low_nospam');
+
+		// -------------------------------------
+		//  Get Services from library file
+		// -------------------------------------
 
 		$services = array();
 
@@ -144,64 +142,105 @@ class Low_nospam_ext
 		}
 
 		/** -------------------------------------
-		/**  Get member groups from DB
+		/**  Get member groups
 		/** -------------------------------------*/
 
-		$this->EE->db->select('group_id, group_title');
-		$this->EE->db->order_by('group_title', 'asc');
-		$query = $this->EE->db->get('exp_member_groups');
+		$query = $this->EE->db->query("SELECT group_id, group_title FROM exp_member_groups
+							WHERE site_id = '".$this->EE->db->escape_str($this->EE->config->item('site_id'))."'
+							ORDER BY group_title ASC");
 
-		foreach($query->result() AS $row)
+		/** -------------------------------------
+		/**  Initiate member groups array
+		/** -------------------------------------*/
+
+		$groups = array();
+
+		/** -------------------------------------
+		/**  Populate member groups array
+		/** -------------------------------------*/
+
+		foreach ($query->result_array() AS $row)
 		{
-			$groups[$row->group_id] = $row->group_title;
+			$groups[$row['group_id']] = $row['group_title'];
 		}
 
 		/** -------------------------------------
-		/**  Compose settings array
+		/**  Define settings array for display
 		/** -------------------------------------*/
-
-		$settings = array(
-			'service'			=> array('s', $services, $this->default_settings['service']),
-			'api_key'			=> $this->default_settings['api_key'],
-			'check_members'		=> array('ms', $groups, $this->default_settings['check_members']),
-			'check_comments'	=> array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_comments']),
-			'discard_comments'	=> array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['discard_comments'])
-		);
+		
+		$data = array();
+		$data['settings'] = array_merge($this->default_settings, $current);
+		$data['member_groups'] = $groups;
+		$data['version'] = LOW_NOSPAM_VERSION;
+		$data['name'] = str_replace('_ext', '', strtolower(get_class($this)));
+		$data['services'] = $services;
+		$data['has_forum'] = isset($this->EE->cp->installed_modules['forum']);
+		$data['has_wiki'] = isset($this->EE->cp->installed_modules['wiki']);
 
 		/** -------------------------------------
-		/**  Is Forum installed?
+		/**  Build output
 		/** -------------------------------------*/
 
-		$this->EE->db->where('module_name', 'Forum');
-		$this->EE->db->from('exp_modules');
-
-		if ($this->EE->db->count_all_results())
-		{
-			$settings['check_forum_posts'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_forum_posts']);
-		}
+		$this->EE->cp->set_breadcrumb('#', $this->EE->lang->line('low_nospam_module_name'));
 
 		/** -------------------------------------
-		/**  Is wiki installed?
+		/**  Load view
 		/** -------------------------------------*/
 
-		$this->EE->db->where('module_name', 'Wiki');
-		$this->EE->db->from('exp_modules');
-
-		if ($this->EE->db->count_all_results())
-		{
-			$settings['check_wiki_articles'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_wiki_articles']);
-		}
-
-		/** -------------------------------------
-		/**  Final settings value(s)
-		/** -------------------------------------*/
-
-		$settings['check_member_registrations'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['check_member_registrations']);
-		$settings['moderate_if_unreachable'] = array('r', array('y' => "yes", 'n' => "no"), $this->default_settings['moderate_if_unreachable']);
-
-		return $settings;
+		return $this->EE->load->view('settings', $data, TRUE);
 	}
 
+	// --------------------------------------------------------------------
+
+	/**
+	* Save extension settings
+	*
+	*/
+	function save_settings()
+	{
+		// Initiate settings array
+		$settings = array();
+		
+		// Loop through default settings
+		foreach ($this->default_settings AS $setting => $default_value)
+		{
+			// Check posted values, fallback to default value
+			if (($value = $this->EE->input->post($setting)) ===  FALSE)
+			{
+				$value = $default_value;
+			}
+
+			// Populate new settings
+			$settings[$setting] = $value;
+		}
+
+		// Update new settings
+		$this->EE->db->where('class', get_class($this));
+		$this->EE->db->update('exp_extensions', array('settings' => serialize($settings)));
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	*/
+	function sessions_start(&$session)
+	{
+		// Mark as ham only if opening comments and checking the box
+		if ((REQ == 'CP') &&
+			($this->EE->input->get('method') == 'modify_comments') &&
+			($this->EE->input->post('action') == 'open') &&
+			($this->EE->input->post('mark_as_ham') == 'y') &&
+			($this->EE->input->post('toggle') !== FALSE))
+		{
+			$this->_mark($this->EE->input->post('toggle'), 'ham');
+		}
+		
+		// Zero Tolerance
+		//if ($this->settings['zero_tolerance'] == 'y' && (REQ == 'ACTION' || REQ == 'PAGE') && $_POST)
+		//{
+		//}
+	}
+	
 	// --------------------------------------------------------------------
 
 	/**
@@ -212,16 +251,16 @@ class Low_nospam_ext
 	*/
 	function insert_comment_insert_array($data)
 	{
-		/** -------------------------------------
-		/**  check settings to see if comment needs to be verified
-		/** -------------------------------------*/
+		// -------------------------------------
+		//  check settings to see if comment needs to be verified
+		// -------------------------------------
 
 		if ($this->settings['check_comments'] == 'y' AND $this->_check_user())
 		{
 
-			/** -------------------------------------
-			/**  Array to check
-			/** -------------------------------------*/
+			// -------------------------------------
+			//  Array to check
+			// -------------------------------------
 
 			$comment = array(
 				'comment_author'		=> $data['name'],
@@ -234,19 +273,19 @@ class Low_nospam_ext
 			// Check it!
 			if ($this->is_spam($comment))
 			{
-				/** -------------------------------------
-				/**  discard message (exit without saving)
-				/**  or save closed comment
-				/** -------------------------------------*/
+				// -------------------------------------
+				//  discard message (exit without saving)
+				//  or save closed comment
+				// -------------------------------------
 
-				if ($this->settings['discard_comments'] == 'y')
+				if ($this->settings['caught_comments'] == 'x')
 				{
 					$this->error = 'input_discarded';
 				}
 				else
 				{
-					// set comment status to 'c' 
-					$data['status'] = 'c';
+					// set comment status to 'c' or 'p'
+					$data['status'] = $this->settings['caught_comments'];
 
 					// insert closed comment to DB
 					$this->EE->db->insert('exp_comments', $data);
@@ -265,6 +304,21 @@ class Low_nospam_ext
 
 		// return data as if nothing happened...
 		return $data;
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	* Mark given comments as spam, if so desired
+	*
+	* @param	array
+	* @return	void
+	*/
+	function delete_comment_additional($comment_ids)
+	{
+		// First, check if checkbox was checked
+		if ($this->EE->input->post('mark_as_spam') != 'y') return;
+		$this->_mark($comment_ids);
 	}
 
 	// --------------------------------------------------------------------
@@ -474,7 +528,7 @@ class Low_nospam_ext
 	function _check_user()
 	{
 		// Don't check if we don't have to check logged-in members
-		if ($this->settings['check_members'] === 'n' AND $this->EE->session->userdata['member_id'] != 0)
+		if ($this->settings['check_members'] == 'n' AND $this->EE->session->userdata['member_id'] != 0)
 		{
 			$do_check = FALSE;
 		}
@@ -495,6 +549,51 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
+	* Mark given comments as either spam or ham
+	*
+	* @param	array	the comment ids to mark
+	* @param	string	'spam' or 'ham'
+	* @return	void
+	*/
+	function _mark($comment_ids = array(), $as = 'spam')
+	{
+		// Set service and api key
+		if ( ! $this->EE->low_nospam->set_service($this->settings['service'], $this->settings['api_key']))
+		{
+			// Show user error: service not found
+			show_error('Service not found');
+		}
+
+		// compose where part of query
+		$sql_where = "comment_id IN ('".implode("','", $comment_ids)."')";
+
+		// Compose query, service-friendy
+		$sql = "SELECT
+				ip_address	AS user_ip,
+				name		AS comment_author,
+				email		AS comment_author_email,
+				url			AS comment_author_url,
+				comment		AS comment_content
+			FROM
+				`exp_comments`
+			WHERE
+				{$sql_where}
+		";
+		$query = $this->EE->db->query($sql);
+		
+		// Determine method
+		$method = ($as == 'spam') ? 'mark_as_spam' : 'mark_as_ham';
+
+		// send each one to service
+		foreach ($query->result_array() AS $row)
+		{
+			$this->EE->low_nospam->$method($row);
+		}
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
 	* Activate extension
 	*
 	* @return	null
@@ -503,7 +602,9 @@ class Low_nospam_ext
 	{
 		// Hooks to insert
 		$hooks = array(
+			'sessions_start',
 			'insert_comment_insert_array',
+			'delete_comment_additional',
 			'forum_submit_post_start',
 			'edit_wiki_article_end',
 			'member_member_register_start'
@@ -514,11 +615,11 @@ class Low_nospam_ext
 		{
 			// data to insert
 			$data = array(
-				'class'		=> get_class($this),
+				'class'		=> $this->class_name,
 				'method'	=> $hook,
 				'hook'		=> $hook,
 				'priority'	=> 1,
-				'version'	=> $this->version,
+				'version'	=> LOW_NOSPAM_VERSION,
 				'enabled'	=> 'y',
 				'settings'	=> serialize($this->default_settings)
 			);
@@ -549,7 +650,7 @@ class Low_nospam_ext
 		if ($current < '2.1.1')
 		{
 			// Get current settings
-			$query = $this->EE->db->query("SELECT settings FROM exp_extensions WHERE class = '".get_class($this)."' LIMIT 1");
+			$query = $this->EE->db->query("SELECT settings FROM exp_extensions WHERE class = '".$this->class_name."' LIMIT 1");
 			$row = $query->row();
 			$settings = unserialize($row->settings);
 
@@ -558,13 +659,13 @@ class Low_nospam_ext
 			$new_settings = $this->EE->db->escape_str(serialize($settings));
 
 			// save new settings to DB
-			$this->EE->db->query("UPDATE exp_extensions SET settings = '{$new_settings}' WHERE class = '".get_class($this)."'");
+			$this->EE->db->query("UPDATE exp_extensions SET settings = '{$new_settings}' WHERE class = '".$this->class_name."'");
 
 			// Add new hook
 			$this->EE->db->insert(
 				'exp_extensions', array(
 					'extension_id'	=> '',
-					'class'			=> get_class($this),
+					'class'			=> $this->class_name,
 					'method'		=> 'member_member_register_start',
 					'hook'			=> 'member_member_register_start',
 					'settings'		=> $new_settings,
@@ -582,7 +683,7 @@ class Low_nospam_ext
 		$data['version'] = $this->version;
 
 		// Update records using data array
-		$this->EE->db->where('class', get_class($this));
+		$this->EE->db->where('class', $this->class_name);
 		$this->EE->db->update('exp_extensions', $data);
 	}
 
@@ -596,7 +697,7 @@ class Low_nospam_ext
 	function disable_extension()
 	{
 		// Delete records
-		$this->EE->db->where('class', get_class($this));
+		$this->EE->db->where('class', $this->class_name);
 		$this->EE->db->delete('exp_extensions');
 	}
 

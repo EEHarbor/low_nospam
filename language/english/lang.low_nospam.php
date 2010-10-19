@@ -4,7 +4,6 @@
 * Low NoSpam Language file
 *
 * @package			low-nospam-ee2_addon
-* @version			2.1.2
 * @author			Lodewijk Schutte ~ Low <low@loweblog.com>
 * @link				http://loweblog.com/software/low-nospam/
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
@@ -26,6 +25,15 @@ $lang = array(
 
 "settings_not_found" =>
 "Low NoSpam extension settings not found",
+
+"caught_comments_p" =>
+"Set caught comments to Pending",
+
+"caught_comments_c" =>
+"Set caught comments to Closed",
+
+"caught_comments_x" =>
+"Delete caught comments",
 
 "url" =>
 "URL",
@@ -114,26 +122,6 @@ $lang = array(
 "invalid_api_key" =>
 "Your API key appears to be invalid.",
 
-// JavaScript status messages
-
-"no_comments" =>
-"No comments selected",
-
-"marking_as_spam" =>
-"Marking comments as spam",
-
-"marking_as_ham" =>
-"Marking comments as ham",
-
-"deleting" =>
-"Deleting comments",
-
-"opening" =>
-"Opening comments",
-
-"done" =>
-"All done!",
-
 // Accessory lines
 
 "closed_comments_one" =>
@@ -143,7 +131,7 @@ $lang = array(
 "There are currently %s closed comments",
 
 "go_moderate" =>
-"Go to the Low NoSpam module to moderate",
+"Go to the Comment module to moderate",
 
 //----------------------------------------
 
