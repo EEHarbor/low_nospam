@@ -65,7 +65,6 @@ class Low_nospam_ext
 		'api_key'                    => '',
 		'check_members'              => array(2, 3, 4),
 		'check_comments'             => 'y',
-		'discard_comments'           => 'n',
 		'caught_comments'            => 'p',
 		'check_forum_posts'          => 'n',
 		'check_wiki_articles'        => 'n',
@@ -650,9 +649,7 @@ class Low_nospam_ext
 		if ($current < '2.1.1')
 		{
 			// Get current settings
-			$query = $this->EE->db->query("SELECT settings FROM exp_extensions WHERE class = '".$this->class_name."' LIMIT 1");
-			$row = $query->row();
-			$settings = unserialize($row->settings);
+			$settings = $this->_get_current_settings();
 
 			// Add new record to settings
 			$settings['check_member_registrations'] = 'n';
@@ -674,6 +671,45 @@ class Low_nospam_ext
 					'enabled'		=> 'y'
 				)
 			); // end db->insert
+		}
+		
+		// Upate to version 2.2.0
+		// - Remove module
+		// - Add delete_comment_additional hook
+		// - Add sessions_start hook
+		// - Add caught_comments setting
+		if ($current < '2.2.0')
+		{
+			// Remove module
+			$this->EE->db->where('module_name', LOW_NOSPAM_CLASS_NAME);
+			$this->EE->db->delete('modules');
+
+			// Add settings
+			// Get current settings
+			$settings = $this->_get_current_settings();
+
+			// Add new record to settings and save to DB
+			unset($settings['discard_comments']);
+			$settings['caught_comments'] = 'p';
+			$this->EE->db->where('class', $this->class_name);
+			$this->EE->db->update('extensions', array('settings', serialize($settings)));
+
+			// Add new hooks
+			foreach (array('delete_comment_additional', 'sessions_start') AS $new_hook)
+			{
+				$this->EE->db->insert(
+					'exp_extensions', array(
+						'extension_id'	=> '',
+						'class'			=> $this->class_name,
+						'method'		=> $new_hook,
+						'hook'			=> $new_hook,
+						'settings'		=> serialize($settings),
+						'priority'		=> 1,
+						'version'		=> $this->version,
+						'enabled'		=> 'y'
+					)
+				); // end db->insert
+			}
 		}
 
 		// init data array
@@ -702,6 +738,19 @@ class Low_nospam_ext
 	}
 
 	// --------------------------------------------------------------------
+
+	/**
+	* Return current settings
+	*
+	* @return	array
+	*/
+	function _get_current_settings()
+	{
+		// Get current settings
+		$query = $this->EE->db->query("SELECT settings FROM exp_extensions WHERE settings != '' AND class = '".$this->class_name."' LIMIT 1");
+		$row = $query->row();
+		return unserialize($row->settings);
+	}
 
 }
 // END CLASS

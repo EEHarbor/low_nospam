@@ -35,47 +35,29 @@ $lang = array(
 "caught_comments_x" =>
 "Delete caught comments",
 
-"url" =>
-"URL",
+"there_are_pending_and_closed_comments" =>
+"There are pending and closed comments",
 
-"comment" =>
-"Comment",
+"there_are_pending_comments" =>
+"There are pending comments",
 
-"title" =>
-"Title",
+"there_are_closed_comments" =>
+"There are closed comments",
 
-"author" =>
-"Author",
+"all_clear" =>
+"No comments are pending or closed at this time",
 
-"upgrade_module" =>
-"Upgrade module",
-
-"upgrade_successful" =>
-"Upgrade successful",
-
-"closed_comment" =>
-"closed comment",
+"pending_comments" =>
+"Pending comments",
 
 "closed_comments" =>
-"closed comments",
+"Closed comments",
 
-"no_closed_comments" =>
-"Yay! No comments are closed at this time!",
+"mark_as_spam" =>
+"Mark as spam",
 
-"delete_all" =>
-"Delete all",
-
-"spam_and_delete" =>
-"Mark as spam and delete",
-
-"ham_and_open" =>
-"Mark as ham and open",
-
-"comments_deleted" =>
-"Comments were marked as spam and deleted",
-
-"comments_opened" =>
-"Comments were marked as ham and opened",
+"mark_as_ham" =>
+"Mark as ham",
 
 "service" =>
 "Service",
@@ -108,7 +90,7 @@ $lang = array(
 "Check member registrations?",
 
 "moderate_if_unreachable" =>
-"Catch comments if service is unreachable?",
+"Catch input if service is unreachable?",
 
 "input_is_spam" =>
 "Computer says your input might be spam, so it will be moderated first.",
@@ -120,18 +102,7 @@ $lang = array(
 "Your input cannot be processed right now, so it will be moderated first.",
 
 "invalid_api_key" =>
-"Your API key appears to be invalid.",
-
-// Accessory lines
-
-"closed_comments_one" =>
-"There is currently one closed comment",
-
-"closed_comments_many" =>
-"There are currently %s closed comments",
-
-"go_moderate" =>
-"Go to the Comment module to moderate",
+"Your Low NoSpam service's API key appears to be invalid.",
 
 //----------------------------------------
 
