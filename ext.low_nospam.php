@@ -745,7 +745,7 @@ class Low_nospam_ext
 			$settings['caught_comments'] = 'p';
 			$settings['zero_tolerance'] = 'n';
 			$this->EE->db->where('class', $this->class_name);
-			$this->EE->db->update('extensions', array('settings', serialize($settings)));
+			$this->EE->db->update('extensions', array('settings' => serialize($settings)));
 
 			// Add new hooks
 			foreach (array('delete_comment_additional', 'sessions_start') AS $new_hook)
