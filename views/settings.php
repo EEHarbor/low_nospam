@@ -106,6 +106,16 @@
 					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="moderate_if_unreachable" value="n"<?php if ($settings['moderate_if_unreachable'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
 				</td>
 			</tr>
+			<tr class="<?=((++$i%2)?'odd':'even')?>">
+				<td>
+					<strong class="label"><?=lang('zero_tolerance')?></strong>
+					<p><?=lang('zero_tolerance_help')?></p>
+				</td>
+				<td style="vertical-align:top">
+					<label style="cursor:pointer"><input type="radio" name="zero_tolerance" value="y"<?php if ($settings['zero_tolerance'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
+					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="zero_tolerance" value="n"<?php if ($settings['zero_tolerance'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
+				</td>
+			</tr>
 		</tbody>
 	</table>
 	<input type="submit" class="submit" value="<?=lang('submit')?>" />

@@ -180,7 +180,7 @@ class Low_nospam_ext
 		/**  Build output
 		/** -------------------------------------*/
 
-		$this->EE->cp->set_breadcrumb('#', $this->EE->lang->line('low_nospam_module_name'));
+		$this->EE->cp->set_breadcrumb('#', LOW_NOSPAM_NAME);
 
 		/** -------------------------------------
 		/**  Load view
@@ -235,9 +235,61 @@ class Low_nospam_ext
 		}
 		
 		// Zero Tolerance
-		//if ($this->settings['zero_tolerance'] == 'y' && (REQ == 'ACTION' || REQ == 'PAGE') && $_POST)
-		//{
-		//}
+		if ($this->settings['zero_tolerance'] == 'y' && (REQ == 'ACTION' || REQ == 'PAGE') && $_POST)
+		{
+			$post = array();
+			$ignore = array('XID','ACT','RET','FROM','PRV','mbase','board_id','topic_id','forum_id','site_id','list',
+							'URI','status','return','redirect_on_duplicate','form_name','id','tagdata','params_id');
+
+			foreach ($_POST AS $key => $value)
+			{
+				// POST values to ignore
+				if (in_array($key, $ignore)) continue;
+
+				// Ignore empty fields
+				if ( ! strlen(($value = trim($value)))) continue;
+
+				// Fill author spot
+				if ( ! $post['comment_author'] && in_array($key, array('name', 'username', 'screen_name', 'author')))
+				{
+					$post['comment_author'] = $value;
+					continue;
+				}
+				
+				// Fill email
+				if ( ! $post['comment_author_email'] && in_array($key, array('mail', 'email', 'emailaddress', 'e-mail', 'from', 'to')))
+				{
+					$post['comment_author_email'] = $value;
+					continue;
+				}
+				
+				// Fill url
+				if ( ! $post['comment_author_url'] && in_array($key, array('url', 'site', 'website')))
+				{
+					$post['comment_author_url'] = $value;
+					continue;
+				}
+
+				// Convert to string
+				if (is_array($value))
+				{
+					$value = (string) @implode(' ', $value);
+				}
+				
+				// Fill the rest
+				$post['comment_content'] .= $value ."\n";
+			}
+
+			// Send to service and get verdict
+			if ($this->is_spam($post))
+			{
+				// Core lang file hasn't been loaded yet, so we'll do so now
+				$this->EE->lang->loadfile('core');
+
+				// Apply hand brake
+				$this->abort('input_discarded');
+			}
+		}
 	}
 	
 	// --------------------------------------------------------------------
@@ -691,6 +743,7 @@ class Low_nospam_ext
 			// Add new record to settings and save to DB
 			unset($settings['discard_comments']);
 			$settings['caught_comments'] = 'p';
+			$settings['zero_tolerance'] = 'n';
 			$this->EE->db->where('class', $this->class_name);
 			$this->EE->db->update('extensions', array('settings', serialize($settings)));
 

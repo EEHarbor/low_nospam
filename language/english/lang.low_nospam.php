@@ -11,12 +11,6 @@
 
 $lang = array(
 
-"low_nospam_module_name" =>
-"Low NoSpam",
-
-"low_nospam_module_description" =>
-"Moderate quarantined comments",
-
 "service_not_found" =>
 "NoSpam service not found",
 
@@ -33,7 +27,7 @@ $lang = array(
 "Set caught comments to Closed",
 
 "caught_comments_x" =>
-"Delete caught comments",
+"Discard caught comments",
 
 "there_are_pending_and_closed_comments" =>
 "There are pending and closed comments",
@@ -91,6 +85,13 @@ $lang = array(
 
 "moderate_if_unreachable" =>
 "Catch input if service is unreachable?",
+
+"zero_tolerance" =>
+"Enable Zero Tolerance?",
+
+"zero_tolerance_help" =>
+"Enabling Zero Tolerance will check <strong>every</strong> POST request made and will <strong>discard</strong> the input when tested positive for spam.
+This will override all of the above settings.",
 
 "input_is_spam" =>
 "Computer says your input might be spam, so it will be moderated first.",
