@@ -19,7 +19,7 @@ $(function(){
 	});
 
 	// Bail out if add-on JS object isn't set
-	if ( ! LOW.NoSpam) return;
+	if ( typeof LOW == 'undefined' || ! LOW.NoSpam) return;
 
 	// Add mark as spam flag to delete comment confirmation page
 	if (LOW.NoSpam.add_marker) {
