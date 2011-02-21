@@ -164,6 +164,12 @@ class Low_nospam_ext
 		}
 
 		/** -------------------------------------
+		/**  Get list of installed modules
+		/** -------------------------------------*/
+
+		$installed = $this->EE->cp->get_installed_modules();
+
+		/** -------------------------------------
 		/**  Define settings array for display
 		/** -------------------------------------*/
 		
@@ -173,8 +179,8 @@ class Low_nospam_ext
 		$data['version'] = LOW_NOSPAM_VERSION;
 		$data['name'] = str_replace('_ext', '', strtolower(get_class($this)));
 		$data['services'] = $services;
-		$data['has_forum'] = isset($this->EE->cp->installed_modules['forum']);
-		$data['has_wiki'] = isset($this->EE->cp->installed_modules['wiki']);
+		$data['has_forum'] = in_array('forum', $installed);
+		$data['has_wiki'] = in_array('wiki', $installed);
 
 		/** -------------------------------------
 		/**  Build output
