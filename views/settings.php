@@ -97,7 +97,7 @@
 					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_member_registrations" value="n"<?php if ($settings['check_member_registrations'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
 				</td>
 			</tr>
-
+			<?php if ($has_freeform): ?>
 			<tr class="<?=((++$i%2)?'odd':'even')?>">
 				<td>
 					<strong class="label"><?=lang('check_freeform_entries')?></strong>
@@ -107,7 +107,8 @@
 					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_freeform_entries" value="n"<?php if ($settings['check_freeform_entries'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
 				</td>
 			</tr>
-
+			<?php endif; ?>
+			<?php if ($has_user): ?>
 			<tr class="<?=((++$i%2)?'odd':'even')?>">
 				<td>
 					<strong class="label"><?=lang('check_ss_user_register')?></strong>
@@ -117,7 +118,7 @@
 					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_ss_user_register" value="n"<?php if ($settings['check_ss_user_register'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
 				</td>
 			</tr>
-			
+			<?php endif; ?>
 			<tr class="<?=((++$i%2)?'odd':'even')?>">
 				<td>
 					<strong class="label"><?=lang('moderate_if_unreachable')?></strong>

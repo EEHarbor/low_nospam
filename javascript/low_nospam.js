@@ -2,8 +2,8 @@
 * Low NoSpam JavaScript file
 *
 * @package			low-nospam-ee2_addon
-* @author			Lodewijk Schutte ~ Low <low@loweblog.com>
-* @link				http://loweblog.com/software/low-nospam/
+* @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
+* @link				http://gotolow.com/addons/low-nospam
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
 */
 

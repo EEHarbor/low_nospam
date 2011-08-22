@@ -1,3 +1,3 @@
 h1. Low NoSpam for ExpressionEngine 2.x
 
-Go to "loweblog.com/software/low-nospam":http://loweblog.com/software/low-nospam/ for more info.
+Go to "loweblog.com/software/low-nospam":http://gotolow.com/addons/low-nospam for more info.

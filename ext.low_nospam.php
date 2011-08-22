@@ -7,8 +7,8 @@ include(PATH_THIRD.'low_nospam/config.php');
 * Low NoSpam Extension class
 *
 * @package			low-nospam-ee2_addon
-* @author			Lodewijk Schutte ~ Low <low@loweblog.com>
-* @link				http://loweblog.com/software/low-nospam/
+* @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
+* @link				http://gotolow.com/addons/low-nospam
 * @license			http://creativecommons.org/licenses/by-sa/3.0/
 */
 class Low_nospam_ext
@@ -183,6 +183,8 @@ class Low_nospam_ext
 		$data['services'] = $services;
 		$data['has_forum'] = in_array('forum', $installed);
 		$data['has_wiki'] = in_array('wiki', $installed);
+		$data['has_freeform'] = in_array('freeform', $installed);
+		$data['has_user'] = in_array('user', $installed);
 
 		/** -------------------------------------
 		/**  Build output
