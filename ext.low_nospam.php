@@ -69,6 +69,8 @@ class Low_nospam_ext
 		'check_forum_posts'          => 'n',
 		'check_wiki_articles'        => 'n',
 		'check_member_registrations' => 'n',
+		'check_freeform_entries'	 => 'n',
+		'check_ss_user_register'	 => 'n',
 		'moderate_if_unreachable'    => 'y',
 		'zero_tolerance'             => 'n'
 	);
@@ -512,6 +514,152 @@ class Low_nospam_ext
 
 	// --------------------------------------------------------------------
 
+
+    // --------------------------------------------------------------------
+	/**
+	 * Check Solspace Freeform new entry
+	 * 
+	 * @access public
+	 * @param  (array) 	Data passed in from extension
+	 * @return (array)	Data passed back to freeform
+	 */
+	
+	public function freeform_module_validate_end($data)
+	{
+
+		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $data;
+				
+		// check settings to see if comment needs to be verified
+		if ($this->settings['check_freeform_entries'] == 'y')
+		{
+			// Don't send these values to the service
+			$ignore = array(
+				'accept_terms',
+				'author_id',
+				'edit_date',
+				'email' , 
+				'entry_date',
+				'form_name',
+				'FROM', 
+				'group_id',
+				'name',
+				'password', 
+				'password_confirm', 
+				'rules', 
+				'site_id', 
+				'url', 
+				'username',
+				'website',
+			);
+			
+			// Init content var
+			$content = '';
+			
+			// Loop through posted data, add to content var
+			foreach ($data AS $key => $val)
+			{
+				if (in_array($key, $ignore)) continue;
+				
+				$content .= $val . "\n";
+			}
+			
+			//url could come from a lot of places
+			$url = isset($data['url']) ? $data['url'] : (isset($data['website']) ? $data['website'] :  $this->EE->input->get_post('url'));
+			
+			$this->input = array(
+				'user_ip'				=> $this->EE->session->userdata['ip_address'],
+				'user_agent'			=> $this->EE->session->userdata['user_agent'],
+				'comment_author'		=> (isset($this->EE->session->userdata['username']) ? $this->EE->session->userdata['username'] : ''),
+				'comment_author_email'	=> isset($data['email']) ? $data['email'] : '',
+				'comment_author_url'	=> $url,
+				'comment_content'		=> $content
+			);
+			
+			// Check it!
+			if ($this->is_spam())
+			{
+				// Exit if spam
+				$this->abort(TRUE);
+			}
+		}
+		
+		//this needs to be returned either way
+		return $last_call;
+	}
+	//END check_solspace_freeform_entry
+
+
+    // --------------------------------------------------------------------
+	/**
+	 * Check Solspace User Member Register
+	 * 
+	 * @access public
+	 * @param  (object) current instance of user
+	 * @param  (array) 	array of errors already found
+	 * @return (array)	Data passed back to freeform
+	 */
+	
+	public function user_register_error_checking($obj, $errors)
+	{
+		
+		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $errors;
+		
+		//if there are already errors, we dont need to bother checking
+		if ( ! empty($last_call)) return $last_call;
+		
+		// check settings to see if comment needs to be verified
+		if ($this->settings['check_ss_user_register'] == 'y')
+		{
+			// Don't send these values to the service
+			$ignore = array(
+				'password', 
+				'password_confirm', 
+				'rules', 
+				'email' , 
+				'url', 
+				'username',
+				'XID', 
+				'ACT', 
+				'RET', 
+				'FROM', 
+				'site_id', 
+				'accept_terms',
+				'captcha'
+			);
+			
+			// Init content var
+			$content = '';
+			
+			// Loop through posted data, add to content var
+			foreach ($_POST AS $key => $val)
+			{
+				if (in_array($key, $ignore)) continue;
+				
+				$content .= $val . "\n";
+			}
+			
+			$this->input = array(
+				'user_ip'				=> $this->EE->session->userdata['ip_address'],
+				'user_agent'			=> $this->EE->session->userdata['user_agent'],
+				'comment_author'		=> $this->EE->input->get_post('username'),
+				'comment_author_email'	=> $this->EE->input->get_post('email'),
+				'comment_author_url'	=> $this->EE->input->get_post('url'),
+				'comment_content'		=> $content
+			);
+			
+			// Check it!
+			if ($this->is_spam())
+			{
+				// Exit if spam
+				$this->abort(TRUE);
+			}
+		}
+		
+		//this needs to be returned either way
+		return $last_call;
+	}
+	//END check_solspace_user_entry
+
 	/**
 	* Checks if given array is a spammy one
 	*
@@ -664,7 +812,9 @@ class Low_nospam_ext
 			'delete_comment_additional',
 			'forum_submit_post_start',
 			'edit_wiki_article_end',
-			'member_member_register_start'
+			'member_member_register_start',			
+			'freeform_module_validate_end',
+			'user_register_error_checking'
 		);
 
 		// insert hooks and methods
@@ -756,6 +906,46 @@ class Low_nospam_ext
 			// Add new hooks
 			foreach (array('delete_comment_additional', 'sessions_start') AS $new_hook)
 			{
+				$this->EE->db->insert(
+					'exp_extensions', array(
+						'extension_id'	=> '',
+						'class'			=> $this->class_name,
+						'method'		=> $new_hook,
+						'hook'			=> $new_hook,
+						'settings'		=> serialize($settings),
+						'priority'		=> 1,
+						'version'		=> $this->version,
+						'enabled'		=> 'y'
+					)
+				); // end db->insert
+			}
+		}
+
+
+
+		// Upate to version 2.2.1
+		// - Add Solspace Freeform hook
+		// - Add Solspace User Hook
+		// - Add Freeform and User settings
+		if ($current < '2.2.1')
+		{
+
+			// Get current settings
+			$settings = $this->_get_current_settings();
+
+			// Add new record to settings and save to DB
+			$settings['check_freeform_entries'] = 'n';
+			$settings['check_ss_user_register'] = 'n';
+
+			$this->EE->db->where('class', $this->class_name);
+			$this->EE->db->update('extensions', array('settings' => serialize($settings)));
+
+
+			// Add new hooks
+			foreach (array('freeform_module_validate_end', 'user_register_error_checking') AS $new_hook)
+			{
+					
+				// Add new hooks
 				$this->EE->db->insert(
 					'exp_extensions', array(
 						'extension_id'	=> '',
