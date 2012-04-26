@@ -119,6 +119,18 @@
 				</td>
 			</tr>
 			<?php endif; ?>
+			<?php if ($has_visitor): ?>
+			<tr class="<?=((++$i%2)?'odd':'even')?>">
+				<td>
+					<strong class="label"><?=lang('check_visitor_registration')?></strong>
+				</td>
+				<td>
+					<label style="cursor:pointer"><input type="radio" name="check_visitor_registration" value="y"<?php if ($settings['check_visitor_registration'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
+					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_visitor_registration" value="n"<?php if ($settings['check_visitor_registration'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
+				</td>
+			</tr>
+				<?php endif; ?>
+
 			<tr class="<?=((++$i%2)?'odd':'even')?>">
 				<td>
 					<strong class="label"><?=lang('moderate_if_unreachable')?></strong>
