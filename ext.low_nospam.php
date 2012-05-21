@@ -518,8 +518,6 @@ class Low_nospam_ext
 
 	// --------------------------------------------------------------------
 
-
-    // --------------------------------------------------------------------
 	/**
 	 * Check Solspace Freeform new entry
 	 * 
@@ -583,7 +581,7 @@ class Low_nospam_ext
 			if ($this->is_spam())
 			{
 				// Exit if spam
-				$this->abort(TRUE);
+				$this->abort();
 			}
 		}
 		
@@ -592,8 +590,8 @@ class Low_nospam_ext
 	}
 	//END check_solspace_freeform_entry
 
+	// --------------------------------------------------------------------
 
-    // --------------------------------------------------------------------
 	/**
 	 * Check Solspace User Member Register
 	 * 
@@ -655,7 +653,7 @@ class Low_nospam_ext
 			if ($this->is_spam())
 			{
 				// Exit if spam
-				$this->abort(TRUE);
+				$this->abort();
 			}
 		}
 		
@@ -664,8 +662,8 @@ class Low_nospam_ext
 	}
 	//END check_solspace_user_entry
 
-
 	// --------------------------------------------------------------------
+
 	/**
 	 * Check Zoo Visitor member registration
 	 *
@@ -751,7 +749,7 @@ class Low_nospam_ext
 			if ($this->is_spam())
 			{
 				// Exit if spam
-				$this->abort(TRUE);
+				$this->abort();
 			}
 		}
 
