@@ -72,7 +72,8 @@ class Low_nospam_ext
 		'check_freeform_entries'	 => 'n',
 		'check_ss_user_register'	 => 'n',
 		'moderate_if_unreachable'    => 'y',
-		'zero_tolerance'             => 'n'
+		'zero_tolerance'             => 'n',
+		'check_visitor_registration' => 'n'
 	);
 
 	/**
@@ -185,6 +186,7 @@ class Low_nospam_ext
 		$data['has_wiki'] = in_array('wiki', $installed);
 		$data['has_freeform'] = in_array('freeform', $installed);
 		$data['has_user'] = in_array('user', $installed);
+		$data['has_visitor'] = in_array('zoo_visitor', $installed);
 
 		/** -------------------------------------
 		/**  Build output
@@ -662,6 +664,103 @@ class Low_nospam_ext
 	}
 	//END check_solspace_user_entry
 
+
+	// --------------------------------------------------------------------
+	/**
+	 * Check Zoo Visitor member registration
+	 *
+	 * @access public
+	 * @param  (array) 	array of errors already found
+	 */
+	function zoo_visitor_register_validation_start($errors){
+		
+		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $errors;
+
+		//if there are already errors, we dont need to bother checking
+		if ( ! empty($last_call)) return $last_call;
+
+		// check settings to see if comment needs to be verified
+		if ($this->settings['check_visitor_registration'] == 'y')
+		{
+			// Don't send these values to the service
+			$ignore = array(
+				'password',
+				'password_confirm',
+				'rules',
+				'email' ,
+				'email_confirm',
+				'url',
+				'username',
+				'XID',
+				'ACT',
+				'RET',
+				'FROM',
+				'site_id',
+				'accept_terms',
+				'captcha',
+				'title',
+				'zoo_visitor_error_delimiters',
+				'author_id',
+				'return',
+				'channel_id',
+				'entry_id',
+				'site_id',
+				'preserve_checkboxes',
+				'allow_comments',
+				'logged_out_member_id',
+				'AG',
+				'zoo_visitor_action',
+				'terms',
+				'revision_post',
+				'ping_servers',
+				'ping_errors',
+				'return',
+				'return_url',
+				'URI',
+				'entry_date'
+
+			);
+
+			foreach ($_POST AS $key => $val)
+			{
+				if(strpos($key, 'field_ft_') !== FALSE) $ignore[] = $key;
+				if(strpos($key, 'field_id_') !== FALSE) $ignore[] = $key;
+			}
+
+			// Init content var
+			$content = '';
+
+			// Loop through posted data, add to content var
+			foreach ($_POST AS $key => $val)
+			{
+				if (in_array($key, $ignore)) continue;
+
+				$content .= $val . "\n";
+			}
+
+			$this->input = array(
+				'user_ip'				=> $this->EE->session->userdata['ip_address'],
+				'user_agent'			=> $this->EE->session->userdata['user_agent'],
+				'comment_author'		=> $this->EE->input->get_post('username'),
+				'comment_author_email'	=> $this->EE->input->get_post('email'),
+				'comment_author_url'	=> $this->EE->input->get_post('url'),
+				'comment_content'		=> $content
+			);
+
+			// Check it!
+			if ($this->is_spam())
+			{
+				// Exit if spam
+				$this->abort(TRUE);
+			}
+		}
+
+		//this needs to be returned either way
+		return $last_call;
+
+	}
+
+
 	/**
 	* Checks if given array is a spammy one
 	*
@@ -816,7 +915,8 @@ class Low_nospam_ext
 			'edit_wiki_article_end',
 			'member_member_register_start',			
 			'freeform_module_validate_end',
-			'user_register_error_checking'
+			'user_register_error_checking',
+			'zoo_visitor_register_validation_start'
 		);
 
 		// insert hooks and methods
@@ -963,6 +1063,42 @@ class Low_nospam_ext
 			}
 		}
 
+
+
+		// Upate to version 2.2.3
+		// - Add Zoo Visitor registration hook
+		// - Add Zoo Visitor settings
+		if ($current < '2.2.3')
+		{
+			// Get current settings
+			$settings = $this->_get_current_settings();
+
+			// Add new record to settings and save to DB
+			$settings['check_visitor_registration'] = 'n';
+
+			$this->EE->db->where('class', $this->class_name);
+			$this->EE->db->update('extensions', array('settings' => serialize($settings)));
+
+
+			// Add new hooks
+			foreach (array('zoo_visitor_register_validation_start') AS $new_hook)
+			{
+
+				// Add new hooks
+				$this->EE->db->insert(
+					'exp_extensions', array(
+						'extension_id'	=> '',
+						'class'			=> $this->class_name,
+						'method'		=> $new_hook,
+						'hook'			=> $new_hook,
+						'settings'		=> serialize($settings),
+						'priority'		=> 1,
+						'version'		=> $this->version,
+						'enabled'		=> 'y'
+					)
+				); // end db->insert
+			}
+		}
 		// init data array
 		$data = array();
 

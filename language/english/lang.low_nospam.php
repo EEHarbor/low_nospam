@@ -89,6 +89,9 @@ $lang = array(
 "check_ss_user_register"=>
 "Check Solspace User member registration?",
 
+"check_visitor_registration"=>
+"Check Zoo Visitor member registrations?",
+
 "moderate_if_unreachable" =>
 "Catch input if service is unreachable?",
 
