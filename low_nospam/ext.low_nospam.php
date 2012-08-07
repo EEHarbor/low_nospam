@@ -18,49 +18,49 @@ class Low_nospam_ext
 	*
 	* @var	array
 	*/
-	var $settings = array();
+	public $settings = array();
 
 	/**
 	* Extension name
 	*
 	* @var	string
 	*/
-	var $name = LOW_NOSPAM_NAME;
+	public $name = LOW_NOSPAM_NAME;
 
 	/**
 	* Extension version
 	*
 	* @var	string
 	*/
-	var $version = LOW_NOSPAM_VERSION;
+	public $version = LOW_NOSPAM_VERSION;
 
 	/**
 	* Extension description
 	*
 	* @var	string
 	*/
-	var $description = 'Fight spam on your site by using the Akismet or TypePad AntiSpam service';
+	public $description = 'Fight spam on your site by using the Akismet or TypePad AntiSpam service';
 
 	/**
 	* Do settings exist?
 	*
 	* @var	bool
 	*/
-	var $settings_exist = TRUE;
+	public $settings_exist = TRUE;
 
 	/**
 	* Documentation link
 	*
 	* @var	string
 	*/
-	var $docs_url = LOW_NOSPAM_DOCS;
+	public $docs_url = LOW_NOSPAM_DOCS;
 
 	/**
 	* Default settings
 	*
 	* @var	array
 	*/
-	var $default_settings = array(
+	private $default_settings = array(
 		'service'                    => 'akismet',
 		'api_key'                    => '',
 		'check_members'              => array(2, 3, 4),
@@ -81,7 +81,7 @@ class Low_nospam_ext
 	*
 	* @var	string
 	*/
-	var $error = '';
+	public $error = '';
 
 	// --------------------------------------------------------------------
 
@@ -118,7 +118,7 @@ class Low_nospam_ext
 		// set settings
 		$this->settings = $settings;
 	}
-	
+
 	// --------------------------------------------------------------------
 
 	/**
@@ -175,7 +175,7 @@ class Low_nospam_ext
 		/** -------------------------------------
 		/**  Define settings array for display
 		/** -------------------------------------*/
-		
+
 		$data = array();
 		$data['settings'] = array_merge($this->default_settings, $current);
 		$data['member_groups'] = $groups;
@@ -211,7 +211,7 @@ class Low_nospam_ext
 	{
 		// Initiate settings array
 		$settings = array();
-		
+
 		// Loop through default settings
 		foreach ($this->default_settings AS $setting => $default_value)
 		{
@@ -245,7 +245,7 @@ class Low_nospam_ext
 		{
 			$this->_mark($this->EE->input->post('toggle'), 'ham');
 		}
-		
+
 		// Zero Tolerance
 		if ($this->settings['zero_tolerance'] == 'y' && (REQ == 'ACTION' || REQ == 'PAGE') && $_POST)
 		{
@@ -267,14 +267,14 @@ class Low_nospam_ext
 					$post['comment_author'] = $value;
 					continue;
 				}
-				
+
 				// Fill email
 				if ( ! $post['comment_author_email'] && in_array($key, array('mail', 'email', 'emailaddress', 'e-mail', 'from', 'to')))
 				{
 					$post['comment_author_email'] = $value;
 					continue;
 				}
-				
+
 				// Fill url
 				if ( ! $post['comment_author_url'] && in_array($key, array('url', 'site', 'website')))
 				{
@@ -287,7 +287,7 @@ class Low_nospam_ext
 				{
 					$value = (string) @implode(' ', $value);
 				}
-				
+
 				// Fill the rest
 				$post['comment_content'] .= $value ."\n";
 			}
@@ -303,7 +303,7 @@ class Low_nospam_ext
 			}
 		}
 	}
-	
+
 	// --------------------------------------------------------------------
 
 	/**
@@ -454,7 +454,7 @@ class Low_nospam_ext
 
 				// get real last revision id
 				$query  = $this->EE->db->query("SELECT last_revision_id FROM exp_wiki_page WHERE wiki_id = {$wiki_id} AND page_id = {$page_id}");
-				$row    = $query->row_array(); 
+				$row    = $query->row_array();
 				$rev_id = $row['last_revision_id'];
 
 				// close revision
@@ -520,17 +520,17 @@ class Low_nospam_ext
 
 	/**
 	 * Check Solspace Freeform new entry
-	 * 
+	 *
 	 * @access public
 	 * @param  (array) 	Data passed in from extension
 	 * @return (array)	Data passed back to freeform
 	 */
-	
+
 	public function freeform_module_validate_end($data)
 	{
 
 		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $data;
-				
+
 		// check settings to see if comment needs to be verified
 		if ($this->settings['check_freeform_entries'] == 'y')
 		{
@@ -539,35 +539,35 @@ class Low_nospam_ext
 				'accept_terms',
 				'author_id',
 				'edit_date',
-				'email' , 
+				'email' ,
 				'entry_date',
 				'form_name',
-				'FROM', 
+				'FROM',
 				'group_id',
 				'name',
-				'password', 
-				'password_confirm', 
-				'rules', 
-				'site_id', 
-				'url', 
+				'password',
+				'password_confirm',
+				'rules',
+				'site_id',
+				'url',
 				'username',
 				'website',
 			);
-			
+
 			// Init content var
 			$content = '';
-			
+
 			// Loop through posted data, add to content var
 			foreach ($data AS $key => $val)
 			{
 				if (in_array($key, $ignore)) continue;
-				
+
 				$content .= $val . "\n";
 			}
-			
+
 			//url could come from a lot of places
 			$url = isset($data['url']) ? $data['url'] : (isset($data['website']) ? $data['website'] :  $this->EE->input->get_post('url'));
-			
+
 			$this->input = array(
 				'user_ip'				=> $this->EE->session->userdata['ip_address'],
 				'user_agent'			=> $this->EE->session->userdata['user_agent'],
@@ -576,7 +576,7 @@ class Low_nospam_ext
 				'comment_author_url'	=> $url,
 				'comment_content'		=> $content
 			);
-			
+
 			// Check it!
 			if ($this->is_spam())
 			{
@@ -584,7 +584,7 @@ class Low_nospam_ext
 				$this->abort();
 			}
 		}
-		
+
 		//this needs to be returned either way
 		return $last_call;
 	}
@@ -594,52 +594,52 @@ class Low_nospam_ext
 
 	/**
 	 * Check Solspace User Member Register
-	 * 
+	 *
 	 * @access public
 	 * @param  (object) current instance of user
 	 * @param  (array) 	array of errors already found
 	 * @return (array)	Data passed back to freeform
 	 */
-	
+
 	public function user_register_error_checking($obj, $errors)
 	{
-		
+
 		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $errors;
-		
+
 		//if there are already errors, we dont need to bother checking
 		if ( ! empty($last_call)) return $last_call;
-		
+
 		// check settings to see if comment needs to be verified
 		if ($this->settings['check_ss_user_register'] == 'y')
 		{
 			// Don't send these values to the service
 			$ignore = array(
-				'password', 
-				'password_confirm', 
-				'rules', 
-				'email' , 
-				'url', 
+				'password',
+				'password_confirm',
+				'rules',
+				'email' ,
+				'url',
 				'username',
-				'XID', 
-				'ACT', 
-				'RET', 
-				'FROM', 
-				'site_id', 
+				'XID',
+				'ACT',
+				'RET',
+				'FROM',
+				'site_id',
 				'accept_terms',
 				'captcha'
 			);
-			
+
 			// Init content var
 			$content = '';
-			
+
 			// Loop through posted data, add to content var
 			foreach ($_POST AS $key => $val)
 			{
 				if (in_array($key, $ignore)) continue;
-				
+
 				$content .= $val . "\n";
 			}
-			
+
 			$this->input = array(
 				'user_ip'				=> $this->EE->session->userdata['ip_address'],
 				'user_agent'			=> $this->EE->session->userdata['user_agent'],
@@ -648,7 +648,7 @@ class Low_nospam_ext
 				'comment_author_url'	=> $this->EE->input->get_post('url'),
 				'comment_content'		=> $content
 			);
-			
+
 			// Check it!
 			if ($this->is_spam())
 			{
@@ -656,7 +656,7 @@ class Low_nospam_ext
 				$this->abort();
 			}
 		}
-		
+
 		//this needs to be returned either way
 		return $last_call;
 	}
@@ -671,7 +671,7 @@ class Low_nospam_ext
 	 * @param  (array) 	array of errors already found
 	 */
 	function zoo_visitor_register_validation_start($errors){
-		
+
 		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $errors;
 
 		//if there are already errors, we dont need to bother checking
@@ -884,7 +884,7 @@ class Low_nospam_ext
 				{$sql_where}
 		";
 		$query = $this->EE->db->query($sql);
-		
+
 		// Determine method
 		$method = ($as == 'spam') ? 'mark_as_spam' : 'mark_as_ham';
 
@@ -911,7 +911,7 @@ class Low_nospam_ext
 			'delete_comment_additional',
 			'forum_submit_post_start',
 			'edit_wiki_article_end',
-			'member_member_register_start',			
+			'member_member_register_start',
 			'freeform_module_validate_end',
 			'user_register_error_checking',
 			'zoo_visitor_register_validation_start'
@@ -980,7 +980,7 @@ class Low_nospam_ext
 				)
 			); // end db->insert
 		}
-		
+
 		// Upate to version 2.2.0
 		// - Remove module
 		// - Add delete_comment_additional hook
@@ -989,7 +989,7 @@ class Low_nospam_ext
 		if ($current < '2.2.0')
 		{
 			// Remove module
-			$this->EE->db->where('module_name', LOW_NOSPAM_CLASS_NAME);
+			$this->EE->db->where('module_name', ucfirst(LOW_NOSPAM_PACKAGE));
 			$this->EE->db->delete('modules');
 
 			// Add settings
@@ -1044,7 +1044,7 @@ class Low_nospam_ext
 			// Add new hooks
 			foreach (array('freeform_module_validate_end', 'user_register_error_checking') AS $new_hook)
 			{
-					
+
 				// Add new hooks
 				$this->EE->db->insert(
 					'exp_extensions', array(

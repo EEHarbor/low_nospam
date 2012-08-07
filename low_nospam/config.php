@@ -11,10 +11,10 @@
 
 if ( ! defined('LOW_NOSPAM_NAME'))
 {
-	define('LOW_NOSPAM_NAME',       'Low NoSpam');
-	define('LOW_NOSPAM_CLASS_NAME', 'Low_nospam');
-	define('LOW_NOSPAM_VERSION',    '2.2.3');
-	define('LOW_NOSPAM_DOCS',       'http://gotolow.com/addons/low-nospam');
+	define('LOW_NOSPAM_NAME',    'Low NoSpam');
+	define('LOW_NOSPAM_PACKAGE', 'Low_nospam');
+	define('LOW_NOSPAM_VERSION', '2.2.3');
+	define('LOW_NOSPAM_DOCS',    'http://gotolow.com/addons/low-nospam');
 }
 
 $config['name']     = LOW_NOSPAM_NAME;
