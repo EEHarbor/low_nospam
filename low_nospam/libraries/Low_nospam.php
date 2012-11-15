@@ -1,48 +1,48 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
-* Low NoSpam Library class
-*
-* @package			low-nospam-ee2_addon
-* @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
-* @link				http://gotolow.com/addons/low-nospam
-* @license			http://creativecommons.org/licenses/by-sa/3.0/
-*/
+ * Low NoSpam Library class
+ *
+ * @package			low-nospam-ee2_addon
+ * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
+ * @link				http://gotolow.com/addons/low-nospam
+ * @license			http://creativecommons.org/licenses/by-sa/3.0/
+ */
 class Low_nospam
 {
 	/**
-	* Selected API details
-	*
-	* @var	array
-	*/
+	 * Selected API details
+	 *
+	 * @var	array
+	 */
 	var $api = array();
 
 	/**
-	* Selected API key
-	*
-	* @var	string
-	*/
+	 * Selected API key
+	 *
+	 * @var	string
+	 */
 	var $api_key = '';
 
 	/**
-	* Data to check
-	*
-	* @var	array
-	*/
+	 * Data to check
+	 *
+	 * @var	array
+	 */
 	var $data = array();
 
 	/**
-	* Connection pointer
-	*
-	* @var	array
-	*/
+	 * Connection pointer
+	 *
+	 * @var	array
+	 */
 	var $connection;
 
 	/**
-	* NoSpam services
-	*
-	* @var	array
-	*/
+	 * NoSpam services
+	 *
+	 * @var	array
+	 */
 	var $services = array(
 
 		// Akismet details
@@ -66,10 +66,10 @@ class Low_nospam
 	);
 
 	/**
-	* Unnecessary $_SERVER variables
-	*
-	* @var	array
-	*/
+	 * Unnecessary $_SERVER variables
+	 *
+	 * @var	array
+	 */
 	var $ignore = array(
 		'HTTP_COOKIE',
 		'HTTP_X_FORWARDED_FOR',
@@ -89,10 +89,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* PHP4 Constructor
-	*
-	* @see	__construct()
-	*/
+	 * PHP4 Constructor
+	 *
+	 * @see	__construct()
+	 */
 	function Low_nospam()
 	{
 		$this->__construct();
@@ -101,15 +101,15 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* PHP 5 Constructor
-	*
-	* @return	void
-	*/
+	 * PHP 5 Constructor
+	 *
+	 * @return	void
+	 */
 	function __construct()
 	{
-		/** -------------------------------------
-		/**  Get global instance
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Get global instance
+		// -------------------------------------
 
 		$this->EE =& get_instance();
 
@@ -129,10 +129,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Set service and api key
-	*
-	* @return	bool
-	*/
+	 * Set service and api key
+	 *
+	 * @return	bool
+	 */
 	function set_service($name, $key)
 	{
 		if (isset($this->services[$name]))
@@ -150,10 +150,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Connect to service
-	*
-	* @return	bool
-	*/
+	 * Connect to service
+	 *
+	 * @return	bool
+	 */
 	function connect()
 	{
 		return ($this->connection = @fsockopen($this->api['host'], $this->api['port'])) ? TRUE : FALSE;
@@ -162,10 +162,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Close connection to the service
-	*
-	* @return	bool
-	*/
+	 * Close connection to the service
+	 *
+	 * @return	bool
+	 */
 	function disconnect()
 	{
 		return @fclose($this->connection);
@@ -174,10 +174,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Check if service is available
-	*
-	* @return	bool
-	*/
+	 * Check if service is available
+	 *
+	 * @return	bool
+	 */
 	function is_available()
 	{
 		if ($this->connect())
@@ -194,16 +194,16 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Communicate with service
-	*
-	* @param	string
-	* @param	string
-	* @param	string
-	* @param	int
-	* @return	mixed	string if successful, FALSE if not
-	*/
+	 * Communicate with service
+	 *
+	 * @param	string
+	 * @param	string
+	 * @param	string
+	 * @param	int
+	 * @return	mixed	string if successful, FALSE if not
+	 */
 	function get_response($request, $path, $type = 'post', $response_length = 1160)
-	{				
+	{
 		if ($this->connect())
 		{
 			// build request
@@ -243,10 +243,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Compose query string from $_SERVER vars and $this->data
-	*
-	* @return	string
-	*/
+	 * Compose query string from $_SERVER vars and $this->data
+	 *
+	 * @return	string
+	 */
 	function get_query_string($add_server_vars = TRUE)
 	{
 		// Loop through SERVER vars, ignore some, add to $this->data
@@ -277,12 +277,12 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Prepare $this->data, make sure required data is present:
-	* http://akismet.com/development/api/#comment-check
-	*
-	* @param	array
-	* @return	string
-	*/
+	 * Prepare $this->data, make sure required data is present:
+	 * http://akismet.com/development/api/#comment-check
+	 *
+	 * @param	array
+	 * @return	string
+	 */
 	function prep_data($data)
 	{
 		$this->data = $data;
@@ -315,10 +315,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Verify API key
-	*
-	* @return	bool
-	*/
+	 * Verify API key
+	 *
+	 * @return	bool
+	 */
 	function key_is_valid()
 	{
 		$key_check = $this->get_response("key={$this->api_key}&blog={$this->site_url}", 'verify-key');
@@ -329,10 +329,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Check if $this->data is spam
-	*
-	* @return	bool
-	*/
+	 * Check if $this->data is spam
+	 *
+	 * @return	bool
+	 */
 	function is_spam()
 	{
 		$response = $this->get_response($this->get_query_string(), 'comment-check');
@@ -343,10 +343,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Tell service this comment is spam
-	*
-	* @return	void
-	*/
+	 * Tell service this comment is spam
+	 *
+	 * @return	void
+	 */
 	function mark_as_spam($comment = array())
 	{
 		if ( ! empty($comment) )
@@ -360,10 +360,10 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	* Tell service this comment is ham
-	*
-	* @return	void
-	*/
+	 * Tell service this comment is ham
+	 *
+	 * @return	void
+	 */
 	function mark_as_ham($comment = array())
 	{
 		if ( ! empty($comment) )

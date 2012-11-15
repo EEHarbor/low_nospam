@@ -4,62 +4,62 @@
 include(PATH_THIRD.'low_nospam/config.php');
 
 /**
-* Low NoSpam Extension class
-*
-* @package			low-nospam-ee2_addon
-* @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
-* @link				http://gotolow.com/addons/low-nospam
-* @license			http://creativecommons.org/licenses/by-sa/3.0/
-*/
+ * Low NoSpam Extension class
+ *
+ * @package			low-nospam-ee2_addon
+ * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
+ * @link				http://gotolow.com/addons/low-nospam
+ * @license			http://creativecommons.org/licenses/by-sa/3.0/
+ */
 class Low_nospam_ext
 {
 	/**
-	* Extension settings
-	*
-	* @var	array
-	*/
+	 * Extension settings
+	 *
+	 * @var	array
+	 */
 	public $settings = array();
 
 	/**
-	* Extension name
-	*
-	* @var	string
-	*/
+	 * Extension name
+	 *
+	 * @var	string
+	 */
 	public $name = LOW_NOSPAM_NAME;
 
 	/**
-	* Extension version
-	*
-	* @var	string
-	*/
+	 * Extension version
+	 *
+	 * @var	string
+	 */
 	public $version = LOW_NOSPAM_VERSION;
 
 	/**
-	* Extension description
-	*
-	* @var	string
-	*/
+	 * Extension description
+	 *
+	 * @var	string
+	 */
 	public $description = 'Fight spam on your site by using the Akismet or TypePad AntiSpam service';
 
 	/**
-	* Do settings exist?
-	*
-	* @var	bool
-	*/
+	 * Do settings exist?
+	 *
+	 * @var	bool
+	 */
 	public $settings_exist = TRUE;
 
 	/**
-	* Documentation link
-	*
-	* @var	string
-	*/
+	 * Documentation link
+	 *
+	 * @var	string
+	 */
 	public $docs_url = LOW_NOSPAM_DOCS;
 
 	/**
-	* Default settings
-	*
-	* @var	array
-	*/
+	 * Default settings
+	 *
+	 * @var	array
+	 */
 	private $default_settings = array(
 		'service'                    => 'akismet',
 		'api_key'                    => '',
@@ -77,19 +77,19 @@ class Low_nospam_ext
 	);
 
 	/**
-	* Error message line
-	*
-	* @var	string
-	*/
+	 * Error message line
+	 *
+	 * @var	string
+	 */
 	public $error = '';
 
 	// --------------------------------------------------------------------
 
 	/**
-	* PHP4 Constructor
-	*
-	* @see	__construct()
-	*/
+	 * PHP4 Constructor
+	 *
+	 * @see	__construct()
+	 */
 	function Low_nospam_ext($settings = FALSE)
 	{
 		$this->__construct($settings);
@@ -98,11 +98,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* PHP 5 Constructor
-	*
-	* @param	$settings	mixed	Array with settings or FALSE
-	* @return	void
-	*/
+	 * PHP 5 Constructor
+	 *
+	 * @param	$settings	mixed	Array with settings or FALSE
+	 * @return	void
+	 */
 	function __construct($settings = FALSE)
 	{
 		//  Get global instance
@@ -122,11 +122,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Extension settings form
-	*
-	* @param	array
-	* @return	string
-	*/
+	 * Extension settings form
+	 *
+	 * @param	array
+	 * @return	string
+	 */
 	function settings_form($current)
 	{
 		$this->EE->load->helper('form');
@@ -143,38 +143,38 @@ class Low_nospam_ext
 			$services[$key] = $key;
 		}
 
-		/** -------------------------------------
-		/**  Get member groups
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Get member groups
+		// -------------------------------------
 
 		$query = $this->EE->db->query("SELECT group_id, group_title FROM exp_member_groups
 							WHERE site_id = '".$this->EE->db->escape_str($this->EE->config->item('site_id'))."'
 							ORDER BY group_title ASC");
 
-		/** -------------------------------------
-		/**  Initiate member groups array
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Initiate member groups array
+		// -------------------------------------
 
 		$groups = array();
 
-		/** -------------------------------------
-		/**  Populate member groups array
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Populate member groups array
+		// -------------------------------------
 
 		foreach ($query->result_array() AS $row)
 		{
 			$groups[$row['group_id']] = $row['group_title'];
 		}
 
-		/** -------------------------------------
-		/**  Get list of installed modules
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Get list of installed modules
+		// -------------------------------------
 
 		$installed = $this->EE->cp->get_installed_modules();
 
-		/** -------------------------------------
-		/**  Define settings array for display
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Define settings array for display
+		// -------------------------------------
 
 		$data = array();
 		$data['settings'] = array_merge($this->default_settings, $current);
@@ -188,15 +188,15 @@ class Low_nospam_ext
 		$data['has_user'] = in_array('user', $installed);
 		$data['has_visitor'] = in_array('zoo_visitor', $installed);
 
-		/** -------------------------------------
-		/**  Build output
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Build output
+		// -------------------------------------
 
 		$this->EE->cp->set_breadcrumb('#', LOW_NOSPAM_NAME);
 
-		/** -------------------------------------
-		/**  Load view
-		/** -------------------------------------*/
+		// -------------------------------------
+		// Load view
+		// -------------------------------------
 
 		return $this->EE->load->view('settings', $data, TRUE);
 	}
@@ -204,9 +204,9 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Save extension settings
-	*
-	*/
+	 * Save extension settings
+	 *
+	 */
 	function save_settings()
 	{
 		// Initiate settings array
@@ -233,7 +233,7 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	*/
+	 */
 	function sessions_start(&$session)
 	{
 		// Mark as ham only if opening comments and checking the box
@@ -307,11 +307,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Check incoming comment, exits if it's spam
-	*
-	* @param	array
-	* @return	array
-	*/
+	 * Check incoming comment, exits if it's spam
+	 *
+	 * @param	array
+	 * @return	array
+	 */
 	function insert_comment_insert_array($data)
 	{
 		// -------------------------------------
@@ -372,11 +372,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Mark given comments as spam, if so desired
-	*
-	* @param	array
-	* @return	void
-	*/
+	 * Mark given comments as spam, if so desired
+	 *
+	 * @param	array
+	 * @return	void
+	 */
 	function delete_comment_additional($comment_ids)
 	{
 		// First, check if checkbox was checked
@@ -387,11 +387,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Check incoming forum post, exit if it's spam
-	*
-	* @param	object
-	* @return	void
-	*/
+	 * Check incoming forum post, exit if it's spam
+	 *
+	 * @param	object
+	 * @return	void
+	 */
 	function forum_submit_post_start($obj)
 	{
 		// check settings to see if trackback needs to be verified
@@ -425,12 +425,12 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Check incoming wiki article, exit if it's spam
-	*
-	* @param	object
-	* @param	string
-	* @return	void
-	*/
+	 * Check incoming wiki article, exit if it's spam
+	 *
+	 * @param	object
+	 * @param	string
+	 * @return	void
+	 */
 	function edit_wiki_article_end($obj, $query)
 	{
 		// check settings to see if comment needs to be verified
@@ -468,10 +468,10 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Check incoming wiki article, exit if it's spam
-	*
-	* @return	void
-	*/
+	 * Check incoming wiki article, exit if it's spam
+	 *
+	 * @return	void
+	 */
 	function member_member_register_start()
 	{
 		// check settings to see if comment needs to be verified
@@ -760,11 +760,11 @@ class Low_nospam_ext
 
 
 	/**
-	* Checks if given array is a spammy one
-	*
-	* @param	array
-	* @return	bool
-	*/
+	 * Checks if given array is a spammy one
+	 *
+	 * @param	array
+	 * @return	bool
+	 */
 	function is_spam($array = array())
 	{
 		// Fallback
@@ -804,11 +804,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Abort script and show user message
-	*
-	* @param	string
-	* @return	void
-	*/
+	 * Abort script and show user message
+	 *
+	 * @param	string
+	 * @return	void
+	 */
 	function abort($msg = '')
 	{
 		$this->EE->extensions->end_script = TRUE;
@@ -825,10 +825,10 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Check if current user needs to be checked
-	*
-	* @return	bool
-	*/
+	 * Check if current user needs to be checked
+	 *
+	 * @return	bool
+	 */
 	function _check_user()
 	{
 		// Don't check if we don't have to check logged-in members
@@ -853,12 +853,12 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Mark given comments as either spam or ham
-	*
-	* @param	array	the comment ids to mark
-	* @param	string	'spam' or 'ham'
-	* @return	void
-	*/
+	 * Mark given comments as either spam or ham
+	 *
+	 * @param	array	the comment ids to mark
+	 * @param	string	'spam' or 'ham'
+	 * @return	void
+	 */
 	function _mark($comment_ids = array(), $as = 'spam')
 	{
 		// Set service and api key
@@ -898,10 +898,10 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Activate extension
-	*
-	* @return	null
-	*/
+	 * Activate extension
+	 *
+	 * @return	null
+	 */
 	function activate_extension()
 	{
 		// Hooks to insert
@@ -940,11 +940,11 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Update extension
-	*
-	* @param	string	$current
-	* @return	null
-	*/
+	 * Update extension
+	 *
+	 * @param	string	$current
+	 * @return	null
+	 */
 	function update_extension($current = '')
 	{
 		if ($current == '' OR $current == $this->version)
@@ -1111,10 +1111,10 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Disable extension
-	*
-	* @return	null
-	*/
+	 * Disable extension
+	 *
+	 * @return	null
+	 */
 	function disable_extension()
 	{
 		// Delete records
@@ -1125,10 +1125,10 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	* Return current settings
-	*
-	* @return	array
-	*/
+	 * Return current settings
+	 *
+	 * @return	array
+	 */
 	function _get_current_settings()
 	{
 		// Get current settings

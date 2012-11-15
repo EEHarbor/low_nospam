@@ -4,14 +4,14 @@
 require PATH_THIRD.'low_nospam/config'.EXT;
 
 /**
-* Low NoSpam Accessory class
-*
-* @package			low-nospam-ee2_addon
-* @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
-* @link				http://gotolow.com/addons/low-nospam
-* @license			http://creativecommons.org/licenses/by-sa/3.0/
-* @since			2.1.0
-*/
+ * Low NoSpam Accessory class
+ *
+ * @package			low-nospam-ee2_addon
+ * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
+ * @link				http://gotolow.com/addons/low-nospam
+ * @license			http://creativecommons.org/licenses/by-sa/3.0/
+ * @since			2.1.0
+ */
 class Low_nospam_acc {
 
 	var $name			= LOW_NOSPAM_NAME;
@@ -23,10 +23,10 @@ class Low_nospam_acc {
 	// --------------------------------------------------------------------
 
 	/**
-	* PHP4 Constructor
-	*
-	* @see	__construct()
-	*/
+	 * PHP4 Constructor
+	 *
+	 * @see	__construct()
+	 */
 	function Low_nospam_acc()
 	{
 		$this->__construct();
@@ -45,13 +45,13 @@ class Low_nospam_acc {
 	// --------------------------------------------------------------------
 
 	/**
-	* Set Sections
-	*
-	* Set content for the accessory
-	*
-	* @access	public
-	* @return	void
-	*/
+	 * Set Sections
+	 *
+	 * Set content for the accessory
+	 *
+	 * @access	public
+	 * @return	void
+	 */
 	function set_sections()
 	{
 		// What language are we speaking?
@@ -70,7 +70,7 @@ class Low_nospam_acc {
 			'pending_comments' => '0',
 			'closed_comments' => '0'
 		);
-		
+
 		// Set totals
 		foreach ($query->result_array() AS $row)
 		{
@@ -85,7 +85,7 @@ class Low_nospam_acc {
 				break;
 			}
 		}
-		
+
 		// Set accessory heading
 		if ($data['pending_comments'] && $data['closed_comments'])
 		{
@@ -128,7 +128,7 @@ class Low_nospam_acc {
 		$add_marker = ($this->EE->input->post('mark_as_spam')) ? 'true' : 'false';
 		$lang_mark_as_spam = $this->EE->lang->line('mark_as_spam');
 		$lang_mark_as_ham = $this->EE->lang->line('mark_as_ham');
-		
+
 		return <<<EOJS
 			<script type="text/javascript">
 			// <![CDATA[
@@ -140,7 +140,7 @@ class Low_nospam_acc {
 				if (typeof LOW.NoSpam == 'undefined') {
 					LOW.NoSpam = new Object;
 				}
-				
+
 				LOW.NoSpam.lang = {
 					"mark_as_spam" : "{$lang_mark_as_spam}",
 					"mark_as_ham" : "{$lang_mark_as_ham}"
