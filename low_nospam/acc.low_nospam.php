@@ -6,16 +6,16 @@ require PATH_THIRD.'low_nospam/config'.EXT;
 /**
  * Low NoSpam Accessory class
  *
- * @package			low-nospam-ee2_addon
+ * @package			low_nospam
  * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
- * @link				http://gotolow.com/addons/low-nospam
+ * @link			http://gotolow.com/addons/low-nospam
  * @license			http://creativecommons.org/licenses/by-sa/3.0/
  * @since			2.1.0
  */
 class Low_nospam_acc {
 
 	var $name			= LOW_NOSPAM_NAME;
-	var $id				= LOW_NOSPAM_CLASS_NAME;
+	var $id				= LOW_NOSPAM_PACKAGE;
 	var $version		= LOW_NOSPAM_VERSION;
 	var $description	= 'Accessory for the Low NoSpam add-on.';
 	var $sections		= array();

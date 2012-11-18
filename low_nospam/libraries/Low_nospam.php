@@ -8,42 +8,17 @@
  * @link				http://gotolow.com/addons/low-nospam
  * @license			http://creativecommons.org/licenses/by-sa/3.0/
  */
-class Low_nospam
-{
-	/**
-	 * Selected API details
-	 *
-	 * @var	array
-	 */
-	var $api = array();
+class Low_nospam {
 
 	/**
-	 * Selected API key
-	 *
-	 * @var	string
+	 * EE super object
 	 */
-	var $api_key = '';
+	private $EE;
 
 	/**
-	 * Data to check
-	 *
-	 * @var	array
+	 * Available NoSpam services
 	 */
-	var $data = array();
-
-	/**
-	 * Connection pointer
-	 *
-	 * @var	array
-	 */
-	var $connection;
-
-	/**
-	 * NoSpam services
-	 *
-	 * @var	array
-	 */
-	var $services = array(
+	private $_services = array(
 
 		// Akismet details
 		'akismet' => array(
@@ -66,16 +41,44 @@ class Low_nospam
 	);
 
 	/**
+	 * API details
+	 */
+	private $_api;
+	private $_api_key    = '';
+	private $_api_name   = '';
+	private $_user_agent = '';
+	private $_site_url   = '';
+
+	/**
+	 * Connection pointer
+	 */
+	private $_connection;
+
+	/**
+	 * Data to check
+	 *
+	 * @var	array
+	 */
+	private $_data = array();
+
+	/**
+	 * Member groups to check
+	 *
+	 * @var	array
+	 */
+	private $_member_groups = array(2,3,4);
+
+	/**
 	 * Unnecessary $_SERVER variables
 	 *
 	 * @var	array
 	 */
-	var $ignore = array(
+	private $_server_ignore = array(
 		'HTTP_COOKIE',
-		'HTTP_X_FORWARDED_FOR',
-		'HTTP_X_FORWARDED_HOST',
+		//'HTTP_X_FORWARDED_FOR',
+		//'HTTP_X_FORWARDED_HOST',
+		//'HTTP_X_FORWARDED_SERVER',
 		'HTTP_MAX_FORWARDS',
-		'HTTP_X_FORWARDED_SERVER',
 		'REDIRECT_STATUS',
 		'SERVER_PORT',
 		'PATH',
@@ -86,17 +89,16 @@ class Low_nospam
 		'argv'
 	);
 
-	// --------------------------------------------------------------------
-
 	/**
-	 * PHP4 Constructor
+	 * Unnecessary $_POST variables
 	 *
-	 * @see	__construct()
+	 * @var	array
 	 */
-	function Low_nospam()
-	{
-		$this->__construct();
-	}
+	private $_post_ignore = array(
+		'ACT',
+		'XID',
+		'site_id'
+	);
 
 	// --------------------------------------------------------------------
 
@@ -105,40 +107,61 @@ class Low_nospam
 	 *
 	 * @return	void
 	 */
-	function __construct()
+	public function __construct()
 	{
-		// -------------------------------------
 		// Get global instance
-		// -------------------------------------
-
 		$this->EE =& get_instance();
 
 		// set user agent
-		$this->user_agent = APP_NAME.'/'.APP_VER;
+		$this->_user_agent = APP_NAME.'/'.APP_VER.' | '.LOW_NOSPAM_NAME.'/'.LOW_NOSPAM_VERSION;
 
 		// set site url
-		$this->site_url = $this->EE->config->item('site_url');
+		$this->_site_url = $this->EE->config->item('site_url');
 
 		// if site url is something like '/' or '/weblog', create full path
-		if (substr($this->site_url, 0, 7) != 'http://')
+		if (substr($this->_site_url, 0, 7) != 'http://')
 		{
-			$this->site_url = 'http://'.$_SERVER['SERVER_NAME'].$this->site_url;
+			$this->_site_url = 'http://'.$_SERVER['SERVER_NAME'].$this->_site_url;
 		}
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * Set service and api key
-	 *
-	 * @return	bool
+	 * Return supported services
 	 */
-	function set_service($name, $key)
+	public function get_services()
 	{
-		if (isset($this->services[$name]))
+		return $this->_services;
+	}
+
+	/**
+	 * Return current set service
+	 */
+	public function get_service()
+	{
+		return $this->_api;
+	}
+
+	/**
+	 * Return current set service name
+	 */
+	public function get_service_name()
+	{
+		return $this->_api_name;
+	}
+
+	/**
+	 * Set service and api key
+	 */
+	public function set_service($name, $key)
+	{
+		if (isset($this->_services[$name]))
 		{
-			$this->api = $this->services[$name];
-			$this->api_key = $key;
+			$this->_api = $this->_services[$name];
+			$this->_api_key  = $key;
+			$this->_api_name = $name;
+
 			return TRUE;
 		}
 		else
@@ -150,39 +173,49 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	 * Connect to service
-	 *
-	 * @return	bool
+	 * Get member groups
 	 */
-	function connect()
+	public function get_member_groups()
 	{
-		return ($this->connection = @fsockopen($this->api['host'], $this->api['port'])) ? TRUE : FALSE;
+		return $this->_member_groups;
+	}
+
+	/**
+	 * Get member groups
+	 */
+	public function set_member_groups($ids)
+	{
+		$this->_member_groups = $ids;
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * Close connection to the service
-	 *
-	 * @return	bool
+	 * Connect to service
 	 */
-	function disconnect()
+	private function _connect()
 	{
-		return @fclose($this->connection);
+		return ($this->_connection = @fsockopen($this->_api['host'], $this->_api['port'])) ? TRUE : FALSE;
+	}
+
+	/**
+	 * Close connection to the service
+	 */
+	private function _disconnect()
+	{
+		return @fclose($this->_connection);
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
 	 * Check if service is available
-	 *
-	 * @return	bool
 	 */
-	function is_available()
+	public function is_available()
 	{
-		if ($this->connect())
+		if ($this->_connect())
 		{
-			$this->disconnect();
+			$this->_disconnect();
 			return TRUE;
 		}
 		else
@@ -195,44 +228,43 @@ class Low_nospam
 
 	/**
 	 * Communicate with service
-	 *
-	 * @param	string
-	 * @param	string
-	 * @param	string
-	 * @param	int
-	 * @return	mixed	string if successful, FALSE if not
 	 */
-	function get_response($request, $path, $type = 'post', $response_length = 1160)
+	private function _get_response($request, $path, $type = 'post', $response_length = 1160)
 	{
-		if ($this->connect())
+		if ($this->_connect())
 		{
+			// Determine host
+			$host = $this->_api['host'];
+
+			// Add api key if not verifying it
+			if ($path != 'verify-key') $host = $this->_api_key.'.'.$host;
+
 			// build request
 			$request
-				= strtoupper($type)." /{$this->api['version']}/{$path} HTTP/1.0\r\n"
-				. "Host: ".((!empty($this->api_key)) ? $this->api_key."." : null)."{$this->api['host']}\r\n"
+				= strtoupper($type)." /{$this->_api['version']}/{$path} HTTP/1.0\r\n"
+				. "Host: {$host}\r\n"
 				. "Content-Type: application/x-www-form-urlencoded; charset=".$this->EE->config->item('charset')."\r\n"
 				. "Content-Length: ".strlen($request)."\r\n"
-				. "User-Agent: {$this->user_agent}\r\n"
+				. "User-Agent: {$this->_user_agent}\r\n"
 				. "\r\n"
 				. $request;
 
 			// Initiate response
 			$response = '';
 
-			@fwrite($this->connection, $request);
+			@fwrite($this->_connection, $request);
 
-			while (!feof($this->connection))
+			while (!feof($this->_connection))
 			{
-				$response .= @fgets($this->connection, $response_length);
+				$response .= @fgets($this->_connection, $response_length);
 			}
 
 			$response = explode("\r\n\r\n", $response, 2);
 			$res = $response[1];
-			$this->disconnect();
+			$this->_disconnect();
 		}
 		else
 		{
-
 			$res = FALSE;
 		}
 
@@ -243,72 +275,90 @@ class Low_nospam
 	// --------------------------------------------------------------------
 
 	/**
-	 * Compose query string from $_SERVER vars and $this->data
-	 *
-	 * @return	string
+	 * Set given key as the data array
 	 */
-	function get_query_string($add_server_vars = TRUE)
+	public function set_data($key, $value = FALSE)
 	{
-		// Loop through SERVER vars, ignore some, add to $this->data
-		if ($add_server_vars === TRUE)
+		if (is_array($key))
 		{
-			foreach ($_SERVER AS $key => $value)
-			{
-				if ( ! in_array($key, $this->ignore) )
-				{
-					$this->data[$key] = $value;
-				}
-			}
-
+			$this->_data = array_merge($this->_data, $key);
 		}
-
-		// initiate query string
-		$query_string = '';
-
-		// loop through data, create QS
-		foreach ($this->data AS $key => $data)
+		elseif (is_string($key))
 		{
-			$query_string .= $key . '=' . urlencode(stripslashes($data)) . '&';
+			$this->_data[$key] = $value;
 		}
-
-		return $query_string;
 	}
 
-	// --------------------------------------------------------------------
+	/**
+	 * Set the $this->data['content'] by $_POST
+	 */
+	public function set_content_by_post($ignore = array())
+	{
+		if ( ! empty($ignore))
+		{
+			$this->_post_ignore = array_merge($this->_post_ignore, $ignore);
+		}
+
+		// Get the flattened POST data
+		$post = (empty($_POST)) ? array() : $this->_flatten($_POST);
+
+		// Implode to single string
+		$post = implode("\n", $post);
+
+		// Add the data to the content key
+		$this->_data['content'] = $post;
+
+		return $post;
+	}
 
 	/**
-	 * Prepare $this->data, make sure required data is present:
-	 * http://akismet.com/development/api/#comment-check
-	 *
-	 * @param	array
-	 * @return	string
+	 * Flatten given array to a 1-dimensional array
 	 */
-	function prep_data($data)
+	private function _flatten($array = array())
 	{
-		$this->data = $data;
+		$flat = array();
 
-		// blog (required)
-		if (!isset($this->data['blog']) || empty($this->data['blog']))
+		foreach ($array AS $key => $val)
 		{
-			$this->data['blog'] = $this->site_url;
+			// Skip ignored keys
+			if (in_array($key, $this->_post_ignore)) continue;
+
+			if (is_array($val))
+			{
+				// Recursively flatten arrays in POST
+				$flat = array_merge($flat, $this->_flatten($val));
+			}
+			else
+			{
+				$flat[] = $val;
+			}
 		}
 
-		// user_ip (required)
-		if (!isset($this->data['user_ip']) || empty($this->data['user_ip']))
-		{
-			$this->data['user_ip'] = $this->EE->input->ip_address();
-		}
+		return $flat;
+	}
 
-		// user_agent (required)
-		if (!isset($this->data['user_agent']) || empty($this->data['user_agent']))
-		{
-			$this->data['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-		}
+	/**
+	 * Set required data
+	 */
+	private function _set_required_data($referrer = TRUE)
+	{
+		// Default required
+		$req = array(
+			'blog'       => $this->_site_url,
+			'user_ip'    => $this->EE->input->ip_address(),
+			'user_agent' => $_SERVER['HTTP_USER_AGENT']
+		);
 
-		// referrer (not required but useful to add anyway)
-		if (!isset($this->data['referrer']) || empty($this->data['referrer']))
+		// Add referrer?
+		if ($referrer) $req['referrer'] = @$_SERVER['HTTP_REFERER'];
+
+		// Set them, only if not already set
+		foreach ($req AS $key => $val)
 		{
-			$this->data['referrer'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+			if ( ! array_key_exists($key, $this->_data))
+			{
+				$this->set_data($key, $value);
+			}
 		}
 	}
 
@@ -316,65 +366,89 @@ class Low_nospam
 
 	/**
 	 * Verify API key
-	 *
-	 * @return	bool
 	 */
-	function key_is_valid()
+	public function key_is_valid()
 	{
-		$key_check = $this->get_response("key={$this->api_key}&blog={$this->site_url}", 'verify-key');
+		$qs = http_build_query(array(
+			'key'  => $this->_api_key,
+			'blog' => $this->_site_url
+		));
 
-		return ($key_check == 'valid');
+		return ($this->_get_response($qs, 'verify-key') == 'valid');
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * Check if $this->data is spam
-	 *
-	 * @return	bool
+	 * Ask service if given data is spam
 	 */
-	function is_spam()
+	public function is_spam($data = array())
 	{
-		$response = $this->get_response($this->get_query_string(), 'comment-check');
+		return ($this->_send('comment-check', $data) == 'true');
+	}
 
-		return ($response == 'true');
+	/**
+	 * Tell service this data is spam
+	 */
+	public function mark_as_spam($data = array())
+	{
+		return $this->_send('submit-spam', $data);
+	}
+
+	/**
+	 * Tell service this data is ham
+	 */
+	public function mark_as_ham($data = array())
+	{
+		return $this->_send('submit-ham', $data);
+	}
+
+	/**
+	 * Send (current) data as given type and get response
+	 */
+	private function _send($type, $data = array())
+	{
+		// Set any given data
+		if ( ! empty($data)) $this->set_data($data);
+
+		// Incoming stuff or not
+		$incoming = ($type == 'comment-check');
+
+		// Set required
+		$this->_set_required_data($incoming);
+
+		// Get Query String
+		$request = $this->_query_string($incoming);
+
+		// Return the response
+		return $this->_get_response($request, $type);
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * Tell service this comment is spam
-	 *
-	 * @return	void
+	 * Compose query string from $_SERVER vars and $this->_data
 	 */
-	function mark_as_spam($comment = array())
+	private function _query_string($add_server_vars = TRUE)
 	{
-		if ( ! empty($comment) )
+		// Loop through SERVER vars, ignore some, add to $this->_data
+		if ($add_server_vars === TRUE)
 		{
-			$this->data = $comment;
+			foreach ($_SERVER AS $key => $value)
+			{
+				if ( ! in_array($key, $this->_server_ignore))
+				{
+					$this->set_data($key, $value);
+				}
+			}
 		}
 
-		return $this->get_response($this->get_query_string(FALSE), 'submit-spam');
+		// Create QS from data
+		$query_string = http_build_query($this->_data);
+
+		// And return it
+		return $query_string;
 	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Tell service this comment is ham
-	 *
-	 * @return	void
-	 */
-	function mark_as_ham($comment = array())
-	{
-		if ( ! empty($comment) )
-		{
-			$this->data = $comment;
-		}
-
-		return $this->get_response($this->get_query_string(FALSE), 'submit-ham');
-	}
-
-	// --------------------------------------------------------------------
 }
 
 // END CLASS

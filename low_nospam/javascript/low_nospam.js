@@ -8,7 +8,7 @@
 */
 
 $(function(){
-	
+
 	// Low NoSpam Settings form
 	$('input[name=check_comments]').click(function(){
 		if ($(this).attr('value') == 'y') {
@@ -25,7 +25,7 @@ $(function(){
 	if (LOW.NoSpam.add_marker) {
 		$('input[name=delete_comments]').after('<input type="hidden" name="mark_as_spam" value="y" />');
 	}
-	
+
 	var dropdown = $('#comment_action').get(0);
 	if (!dropdown) return;
 
@@ -57,5 +57,5 @@ $(function(){
 
 	$(dropdown).change(show_nospam_options);
 	show_nospam_options();
-	
+
 });

@@ -1,4 +1,4 @@
-<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php //if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 // include config file
 include(PATH_THIRD.'low_nospam/config.php');
@@ -6,13 +6,13 @@ include(PATH_THIRD.'low_nospam/config.php');
 /**
  * Low NoSpam Extension class
  *
- * @package			low-nospam-ee2_addon
+ * @package			low_nospam
  * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
- * @link				http://gotolow.com/addons/low-nospam
+ * @link			http://gotolow.com/addons/low-nospam
  * @license			http://creativecommons.org/licenses/by-sa/3.0/
  */
-class Low_nospam_ext
-{
+class Low_nospam_ext {
+
 	/**
 	 * Extension settings
 	 *
@@ -63,17 +63,14 @@ class Low_nospam_ext
 	private $default_settings = array(
 		'service'                    => 'akismet',
 		'api_key'                    => '',
+		'key_is_valid'               => FALSE,
 		'check_members'              => array(2, 3, 4),
 		'check_comments'             => 'y',
 		'caught_comments'            => 'p',
 		'check_forum_posts'          => 'n',
 		'check_wiki_articles'        => 'n',
 		'check_member_registrations' => 'n',
-		'check_freeform_entries'	 => 'n',
-		'check_ss_user_register'	 => 'n',
-		'moderate_if_unreachable'    => 'y',
-		'zero_tolerance'             => 'n',
-		'check_visitor_registration' => 'n'
+		'moderate_if_unreachable'    => 'y'
 	);
 
 	/**
@@ -83,40 +80,46 @@ class Low_nospam_ext
 	 */
 	public $error = '';
 
-	// --------------------------------------------------------------------
-
 	/**
-	 * PHP4 Constructor
-	 *
-	 * @see	__construct()
+	 * Package name
 	 */
-	function Low_nospam_ext($settings = FALSE)
-	{
-		$this->__construct($settings);
-	}
+	private $package = LOW_NOSPAM_PACKAGE;
+
+	/**
+	 * Hooks used
+	 */
+	private $hooks = array(
+		'sessions_start',
+		'insert_comment_insert_array',
+		'delete_comment_additional',
+		'forum_submit_post_start',
+		'edit_wiki_article_end',
+		'member_member_register_start',
+		'cp_js_end'
+	);
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * PHP 5 Constructor
+	 * Constructor
 	 *
 	 * @param	$settings	mixed	Array with settings or FALSE
 	 * @return	void
 	 */
-	function __construct($settings = FALSE)
+	public function __construct($settings = array())
 	{
 		//  Get global instance
 		$this->EE =& get_instance();
 
 		//  Load Low NoSpam Library
-		$this->EE->load->add_package_path(PATH_THIRD.'low_nospam/');
-		$this->EE->load->library('low_nospam');
+		$this->EE->load->add_package_path(PATH_THIRD.$this->package);
+		$this->EE->load->library($this->package);
 
 		// Set extension class name
 		$this->class_name = ucfirst(get_class($this));
 
 		// set settings
-		$this->settings = $settings;
+		$this->settings = array_merge($this->default_settings, $settings);
 	}
 
 	// --------------------------------------------------------------------
@@ -127,10 +130,9 @@ class Low_nospam_ext
 	 * @param	array
 	 * @return	string
 	 */
-	function settings_form($current)
+	public function settings_form($current)
 	{
-		$this->EE->load->helper('form');
-		$this->EE->cp->load_package_js('low_nospam');
+		$this->EE->cp->load_package_js($this->package);
 
 		// -------------------------------------
 		//  Get Services from library file
@@ -138,7 +140,7 @@ class Low_nospam_ext
 
 		$services = array();
 
-		foreach(array_keys($this->EE->low_nospam->services) AS $key)
+		foreach(array_keys($this->EE->low_nospam->get_services()) AS $key)
 		{
 			$services[$key] = $key;
 		}
@@ -147,9 +149,10 @@ class Low_nospam_ext
 		// Get member groups
 		// -------------------------------------
 
-		$query = $this->EE->db->query("SELECT group_id, group_title FROM exp_member_groups
-							WHERE site_id = '".$this->EE->db->escape_str($this->EE->config->item('site_id'))."'
-							ORDER BY group_title ASC");
+		$query = $this->EE->db->select('group_id, group_title')
+		       ->from('member_groups')
+		       ->order_by('group_title')
+		       ->get();
 
 		// -------------------------------------
 		// Initiate member groups array
@@ -179,14 +182,10 @@ class Low_nospam_ext
 		$data = array();
 		$data['settings'] = array_merge($this->default_settings, $current);
 		$data['member_groups'] = $groups;
-		$data['version'] = LOW_NOSPAM_VERSION;
-		$data['name'] = str_replace('_ext', '', strtolower(get_class($this)));
-		$data['services'] = $services;
+		$data['name']      = str_replace('_ext', '', $this->class_name);
+		$data['services']  = $services;
 		$data['has_forum'] = in_array('forum', $installed);
-		$data['has_wiki'] = in_array('wiki', $installed);
-		$data['has_freeform'] = in_array('freeform', $installed);
-		$data['has_user'] = in_array('user', $installed);
-		$data['has_visitor'] = in_array('zoo_visitor', $installed);
+		$data['has_wiki']  = in_array('wiki', $installed);
 
 		// -------------------------------------
 		// Build output
@@ -205,9 +204,8 @@ class Low_nospam_ext
 
 	/**
 	 * Save extension settings
-	 *
 	 */
-	function save_settings()
+	public function save_settings()
 	{
 		// Initiate settings array
 		$settings = array();
@@ -216,7 +214,7 @@ class Low_nospam_ext
 		foreach ($this->default_settings AS $setting => $default_value)
 		{
 			// Check posted values, fallback to default value
-			if (($value = $this->EE->input->post($setting)) ===  FALSE)
+			if (($value = $this->EE->input->post($setting)) === FALSE)
 			{
 				$value = $default_value;
 			}
@@ -225,18 +223,49 @@ class Low_nospam_ext
 			$settings[$setting] = $value;
 		}
 
+		// Set service
+		$this->EE->low_nospam->set_service(
+			$settings['service'],
+			$settings['api_key']
+		);
+
+		// Check key validity
+		$settings['key_is_valid'] = $this->EE->low_nospam->key_is_valid();
+
 		// Update new settings
-		$this->EE->db->where('class', get_class($this));
-		$this->EE->db->update('exp_extensions', array('settings' => serialize($settings)));
+		$this->EE->db->where('class', $this->class_name);
+		$this->EE->db->update('extensions', array('settings' => serialize($settings)));
+
+		$this->EE->functions->redirect($_SERVER['HTTP_REFERER']);
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
+	 * Prep the Low_nospam library for use
+	 *
+	 * @access     public
+	 * @param      object
+	 * @return     object
 	 */
-	function sessions_start(&$session)
+	public function sessions_start(&$session)
 	{
-		// Mark as ham only if opening comments and checking the box
+		// -------------------------------------
+		//  Initiate NoSpam Service
+		// -------------------------------------
+
+		$this->EE->low_nospam->set_service(
+			$this->settings['service'],
+			$this->settings['api_key']
+		);
+
+		// Set member groups so others can get to it easily
+		$this->EE->low_nospam->set_member_groups($this->settings['check_members']);
+
+		// -------------------------------------
+		//  Mark as ham only if opening comments and checking the box
+		// -------------------------------------
+
 		if ((REQ == 'CP') &&
 			($this->EE->input->get('method') == 'modify_comments') &&
 			($this->EE->input->post('action') == 'open') &&
@@ -246,62 +275,17 @@ class Low_nospam_ext
 			$this->_mark($this->EE->input->post('toggle'), 'ham');
 		}
 
-		// Zero Tolerance
-		if ($this->settings['zero_tolerance'] == 'y' && (REQ == 'ACTION' || REQ == 'PAGE') && $_POST)
-		{
-			$post = array();
-			$ignore = array('XID','ACT','RET','FROM','PRV','mbase','board_id','topic_id','forum_id','site_id','list',
-							'URI','status','return','redirect_on_duplicate','form_name','id','tagdata','params_id');
+		return $session;
+	}
 
-			foreach ($_POST AS $key => $value)
-			{
-				// POST values to ignore
-				if (in_array($key, $ignore)) continue;
+	/**
+	 * Add JS to CP for marking as spam/ham
+	 */
+	public function cp_js_end()
+	{
+		$js = $this->_get_last_call();
 
-				// Ignore empty fields
-				if ( ! strlen(($value = trim($value)))) continue;
-
-				// Fill author spot
-				if ( ! $post['comment_author'] && in_array($key, array('name', 'username', 'screen_name', 'author')))
-				{
-					$post['comment_author'] = $value;
-					continue;
-				}
-
-				// Fill email
-				if ( ! $post['comment_author_email'] && in_array($key, array('mail', 'email', 'emailaddress', 'e-mail', 'from', 'to')))
-				{
-					$post['comment_author_email'] = $value;
-					continue;
-				}
-
-				// Fill url
-				if ( ! $post['comment_author_url'] && in_array($key, array('url', 'site', 'website')))
-				{
-					$post['comment_author_url'] = $value;
-					continue;
-				}
-
-				// Convert to string
-				if (is_array($value))
-				{
-					$value = (string) @implode(' ', $value);
-				}
-
-				// Fill the rest
-				$post['comment_content'] .= $value ."\n";
-			}
-
-			// Send to service and get verdict
-			if ($this->is_spam($post))
-			{
-				// Core lang file hasn't been loaded yet, so we'll do so now
-				$this->EE->lang->loadfile('core');
-
-				// Apply hand brake
-				$this->abort('input_discarded');
-			}
-		}
+		return $js;
 	}
 
 	// --------------------------------------------------------------------
@@ -315,26 +299,32 @@ class Low_nospam_ext
 	function insert_comment_insert_array($data)
 	{
 		// -------------------------------------
+		//  Make sure we're dealing with the latest
+		// -------------------------------------
+
+		$data = $this->_get_last_call($data);
+
+		// -------------------------------------
 		//  check settings to see if comment needs to be verified
 		// -------------------------------------
 
-		if ($this->settings['check_comments'] == 'y' AND $this->_check_user())
+		if ($this->_check_prerequisites('check_comments'))
 		{
+			// Set data to check
+			$this->EE->low_nospam->set_data(array(
+				'comment_author'       => $data['name'],
+				'comment_author_email' => $data['email'],
+				'comment_author_url'   => $data['url'],
+				'comment_content'      => $data['comment'],
+				'user_ip'              => $data['ip_address'],
+				'comment_type'         => 'comment'
+			));
 
-			// -------------------------------------
-			//  Array to check
-			// -------------------------------------
-
-			$comment = array(
-				'comment_author'		=> $data['name'],
-				'comment_author_email'	=> $data['email'],
-				'comment_author_url'	=> $data['url'],
-				'comment_content'		=> $data['comment'],
-				'user_ip'				=> $data['ip_address']
-			);
+			// Check if service is available
+			// if ( ! $this->EE->low_nospam->is_available()) return FALSE;
 
 			// Check it!
-			if ($this->is_spam($comment))
+			if ($this->EE->low_nospam->is_spam())
 			{
 				// -------------------------------------
 				//  discard message (exit without saving)
@@ -351,10 +341,10 @@ class Low_nospam_ext
 					$data['status'] = $this->settings['caught_comments'];
 
 					// insert closed comment to DB
-					$this->EE->db->insert('exp_comments', $data);
+					$this->EE->db->insert('comments', $data);
 
 					// Set error message if not already set
-					if ($this->error == '')
+					if (empty($this->error))
 					{
 						$this->error = 'input_is_spam';
 					}
@@ -373,15 +363,13 @@ class Low_nospam_ext
 
 	/**
 	 * Mark given comments as spam, if so desired
-	 *
-	 * @param	array
-	 * @return	void
 	 */
 	function delete_comment_additional($comment_ids)
 	{
-		// First, check if checkbox was checked
-		if ($this->EE->input->post('mark_as_spam') != 'y') return;
-		$this->_mark($comment_ids);
+		if ($this->EE->input->post('mark_as_spam') == 'y')
+		{
+			$this->_mark($comment_ids, 'spam');
+		}
 	}
 
 	// --------------------------------------------------------------------
@@ -394,75 +382,77 @@ class Low_nospam_ext
 	 */
 	function forum_submit_post_start($obj)
 	{
-		// check settings to see if trackback needs to be verified
-		if (isset($this->settings['check_forum_posts']) AND $this->settings['check_forum_posts'] == 'y' AND $this->_check_user())
+		$obj = $this->_get_last_call($obj);
+
+		// Bail out if prerequisites aren't met
+		if ( ! $this->_check_prerequisites('check_forum_posts')) return $obj;
+
+		// input array
+		$this->EE->low_nospam->set_data(array(
+			'user_ip'				=> $this->EE->input->ip_address(),
+			'user_agent'			=> $this->EE->session->userdata['user_agent'],
+			'comment_author'		=> (strlen($this->EE->session->userdata['screen_name']) ? $this->EE->session->userdata['screen_name'] : $this->EE->session->userdata['username']),
+			'comment_author_email'	=> $this->EE->session->userdata['email'],
+			'comment_author_url'	=> $this->EE->session->userdata['url'],
+			'comment_content'		=> ($this->EE->input->post('title') ? $this->EE->input->post('title')."\n\n" : '').$this->EE->input->post('body')
+		));
+
+		// Check it!
+		if ($this->EE->low_nospam->is_spam())
 		{
-			// input array
-			$this->input = array(
-				'user_ip'				=> $this->EE->input->ip_address(),
-				'user_agent'			=> $this->EE->session->userdata['user_agent'],
-				'comment_author'		=> (strlen($this->EE->session->userdata['screen_name']) ? $this->EE->session->userdata['screen_name'] : $this->EE->session->userdata['username']),
-				'comment_author_email'	=> $this->EE->session->userdata['email'],
-				'comment_author_url'	=> $this->EE->session->userdata['url'],
-				'comment_content'		=> ($this->EE->input->post('title') ? $this->EE->input->post('title')."\n\n" : '').$this->EE->input->post('body')
-			);
-
-			// Check it!
-			if ($this->is_spam())
+			// Set error message if not already set
+			if ( ! $this->error )
 			{
-				// Set error message if not already set
-				if ( ! $this->error )
-				{
-					$this->error = 'input_discarded';
-				}
-
-				// No forum post moderation, so just exit
-				$this->abort();
+				$this->error = 'input_discarded';
 			}
+
+			// No forum post moderation, so just exit
+			$this->abort();
 		}
+
+		return $obj;
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
 	 * Check incoming wiki article, exit if it's spam
-	 *
-	 * @param	object
-	 * @param	string
-	 * @return	void
 	 */
 	function edit_wiki_article_end($obj, $query)
 	{
-		// check settings to see if comment needs to be verified
-		if (isset($this->settings['check_wiki_articles']) AND $this->settings['check_wiki_articles'] == 'y' AND $this->_check_user())
+		$query = $this->_get_last_call($query);
+
+		// Bail out?
+		if ( ! $this->_check_prerequisites('check_wiki_articles')) return $query;
+
+		$this->EE->low_nospam->set_data(array(
+			'user_ip'				=> $this->EE->input->ip_address(),
+			'user_agent'			=> $this->EE->session->userdata['user_agent'],
+			'comment_author'		=> (strlen($this->EE->session->userdata['screen_name']) ? $this->EE->session->userdata['screen_name'] : $this->EE->session->userdata['username']),
+			'comment_author_email'	=> $this->EE->session->userdata['email'],
+			'comment_author_url'	=> $this->EE->session->userdata['url'],
+			'comment_content'		=> $this->EE->input->post('title').' '.$this->EE->input->post('article_content')
+		));
+
+		// Check it!
+		if ($this->EE->low_nospam->is_spam())
 		{
-			$this->input = array(
-				'user_ip'				=> $this->EE->input->ip_address(),
-				'user_agent'			=> $this->EE->session->userdata['user_agent'],
-				'comment_author'		=> (strlen($this->EE->session->userdata['screen_name']) ? $this->EE->session->userdata['screen_name'] : $this->EE->session->userdata['username']),
-				'comment_author_email'	=> $this->EE->session->userdata['email'],
-				'comment_author_url'	=> $this->EE->session->userdata['url'],
-				'comment_content'		=> $this->EE->input->post('title').' '.$this->EE->input->post('article_content')
-			);
+			// HANDLE WIKI ARTICLE SPAM
+			$wiki_id = $obj->wiki_id;
+			$page_id = $this->EE->db->escape_str($query->row['page_id']);
 
-			// Check it!
-			if ($this->is_spam())
-			{
-				// HANDLE WIKI ARTICLE SPAM
-				$wiki_id = $obj->wiki_id;
-				$page_id = $this->EE->db->escape_str($query->row['page_id']);
+			// get real last revision id
+			$query  = $this->EE->db->query("SELECT last_revision_id FROM exp_wiki_page WHERE wiki_id = {$wiki_id} AND page_id = {$page_id}");
+			$row    = $query->row_array();
+			$rev_id = $row['last_revision_id'];
 
-				// get real last revision id
-				$query  = $this->EE->db->query("SELECT last_revision_id FROM exp_wiki_page WHERE wiki_id = {$wiki_id} AND page_id = {$page_id}");
-				$row    = $query->row_array();
-				$rev_id = $row['last_revision_id'];
+			// close revision
+			$this->EE->db->query("UPDATE exp_wiki_revisions SET revision_status = 'closed' WHERE wiki_id = {$wiki_id} AND page_id = {$page_id} AND revision_id = {$rev_id}");
 
-				// close revision
-				$this->EE->db->query("UPDATE exp_wiki_revisions SET revision_status = 'closed' WHERE wiki_id = {$wiki_id} AND page_id = {$page_id} AND revision_id = {$rev_id}");
-
-				$this->abort();
-			}
+			$this->abort();
 		}
+
+		return $query;
 	}
 
 	// --------------------------------------------------------------------
@@ -474,331 +464,65 @@ class Low_nospam_ext
 	 */
 	function member_member_register_start()
 	{
-		// check settings to see if comment needs to be verified
-		if (isset($this->settings['check_member_registrations']) AND $this->settings['check_member_registrations'] == 'y' AND $this->_check_user())
+		// Bail out if prerequisites aren't met
+		if ( ! $this->_check_prerequisites()) return;
+
+		// Don't send these values to the service
+		$ignore = array('password', 'password_confirm', 'rules', 'email' , 'url', 'username',
+						'XID', 'ACT', 'RET', 'FROM', 'site_id', 'accept_terms');
+
+		// Init content var
+		$content = '';
+
+		// Loop through posted data, add to content var
+		foreach ($_POST AS $key => $val)
 		{
-			// Don't send these values to the service
-			$ignore = array('password', 'password_confirm', 'rules', 'email' , 'url', 'username',
-							'XID', 'ACT', 'RET', 'FROM', 'site_id', 'accept_terms');
+			if (in_array($key, $ignore)) continue;
 
-			// Init content var
-			$content = '';
-
-			// Loop through posted data, add to content var
-			foreach ($_POST AS $key => $val)
-			{
-				if (in_array($key, $ignore)) continue;
-
-				$content .= $val . "\n";
-			}
-
-			$this->input = array(
-				'user_ip'				=> $this->EE->input->ip_address(),
-				'user_agent'			=> $this->EE->session->userdata['user_agent'],
-				'comment_author'		=> $this->EE->input->post('username'),
-				'comment_author_email'	=> $this->EE->input->post('email'),
-				'comment_author_url'	=> $this->EE->input->post('url'),
-				'comment_content'		=> $content
-			);
-
-			// Check it!
-			if ($this->is_spam())
-			{
-				// Set error message if not already set
-				if ( ! $this->error )
-				{
-					$this->error = 'input_discarded';
-				}
-
-				// Exit if spam
-				$this->abort();
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Check Solspace Freeform new entry
-	 *
-	 * @access public
-	 * @param  (array) 	Data passed in from extension
-	 * @return (array)	Data passed back to freeform
-	 */
-
-	public function freeform_module_validate_end($data)
-	{
-
-		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $data;
-
-		// check settings to see if comment needs to be verified
-		if ($this->settings['check_freeform_entries'] == 'y')
-		{
-			// Don't send these values to the service
-			$ignore = array(
-				'accept_terms',
-				'author_id',
-				'edit_date',
-				'email' ,
-				'entry_date',
-				'form_name',
-				'FROM',
-				'group_id',
-				'name',
-				'password',
-				'password_confirm',
-				'rules',
-				'site_id',
-				'url',
-				'username',
-				'website',
-			);
-
-			// Init content var
-			$content = '';
-
-			// Loop through posted data, add to content var
-			foreach ($data AS $key => $val)
-			{
-				if (in_array($key, $ignore)) continue;
-
-				$content .= $val . "\n";
-			}
-
-			//url could come from a lot of places
-			$url = isset($data['url']) ? $data['url'] : (isset($data['website']) ? $data['website'] :  $this->EE->input->get_post('url'));
-
-			$this->input = array(
-				'user_ip'				=> $this->EE->session->userdata['ip_address'],
-				'user_agent'			=> $this->EE->session->userdata['user_agent'],
-				'comment_author'		=> (isset($this->EE->session->userdata['username']) ? $this->EE->session->userdata['username'] : ''),
-				'comment_author_email'	=> isset($data['email']) ? $data['email'] : '',
-				'comment_author_url'	=> $url,
-				'comment_content'		=> $content
-			);
-
-			// Check it!
-			if ($this->is_spam())
-			{
-				// Exit if spam
-				$this->abort();
-			}
+			$content .= $val . "\n";
 		}
 
-		//this needs to be returned either way
-		return $last_call;
-	}
-	//END check_solspace_freeform_entry
+		$this->EE->low_nospam->set_data(array(
+			'user_ip'				=> $this->EE->input->ip_address(),
+			'user_agent'			=> $this->EE->session->userdata['user_agent'],
+			'comment_author'		=> $this->EE->input->post('username'),
+			'comment_author_email'	=> $this->EE->input->post('email'),
+			'comment_author_url'	=> $this->EE->input->post('url'),
+			'comment_content'		=> $content
+		));
 
-	// --------------------------------------------------------------------
-
-	/**
-	 * Check Solspace User Member Register
-	 *
-	 * @access public
-	 * @param  (object) current instance of user
-	 * @param  (array) 	array of errors already found
-	 * @return (array)	Data passed back to freeform
-	 */
-
-	public function user_register_error_checking($obj, $errors)
-	{
-
-		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $errors;
-
-		//if there are already errors, we dont need to bother checking
-		if ( ! empty($last_call)) return $last_call;
-
-		// check settings to see if comment needs to be verified
-		if ($this->settings['check_ss_user_register'] == 'y')
+		// Check it!
+		if ($this->EE->low_nospam->is_spam())
 		{
-			// Don't send these values to the service
-			$ignore = array(
-				'password',
-				'password_confirm',
-				'rules',
-				'email' ,
-				'url',
-				'username',
-				'XID',
-				'ACT',
-				'RET',
-				'FROM',
-				'site_id',
-				'accept_terms',
-				'captcha'
-			);
-
-			// Init content var
-			$content = '';
-
-			// Loop through posted data, add to content var
-			foreach ($_POST AS $key => $val)
+			// Set error message if not already set
+			if (empty($this->error))
 			{
-				if (in_array($key, $ignore)) continue;
-
-				$content .= $val . "\n";
+				$this->error = 'input_discarded';
 			}
 
-			$this->input = array(
-				'user_ip'				=> $this->EE->session->userdata['ip_address'],
-				'user_agent'			=> $this->EE->session->userdata['user_agent'],
-				'comment_author'		=> $this->EE->input->get_post('username'),
-				'comment_author_email'	=> $this->EE->input->get_post('email'),
-				'comment_author_url'	=> $this->EE->input->get_post('url'),
-				'comment_content'		=> $content
-			);
-
-			// Check it!
-			if ($this->is_spam())
-			{
-				// Exit if spam
-				$this->abort();
-			}
-		}
-
-		//this needs to be returned either way
-		return $last_call;
-	}
-	//END check_solspace_user_entry
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Check Zoo Visitor member registration
-	 *
-	 * @access public
-	 * @param  (array) 	array of errors already found
-	 */
-	function zoo_visitor_register_validation_start($errors){
-
-		$last_call = ( isset( $this->EE->extensions->last_call ) AND is_array($this->EE->extensions->last_call) ) ? $this->EE->extensions->last_call : $errors;
-
-		//if there are already errors, we dont need to bother checking
-		if ( ! empty($last_call)) return $last_call;
-
-		// check settings to see if comment needs to be verified
-		if ($this->settings['check_visitor_registration'] == 'y')
-		{
-			// Don't send these values to the service
-			$ignore = array(
-				'password',
-				'password_confirm',
-				'rules',
-				'email' ,
-				'email_confirm',
-				'url',
-				'username',
-				'XID',
-				'ACT',
-				'RET',
-				'FROM',
-				'site_id',
-				'accept_terms',
-				'captcha',
-				'title',
-				'zoo_visitor_error_delimiters',
-				'author_id',
-				'return',
-				'channel_id',
-				'entry_id',
-				'site_id',
-				'preserve_checkboxes',
-				'allow_comments',
-				'logged_out_member_id',
-				'AG',
-				'zoo_visitor_action',
-				'terms',
-				'revision_post',
-				'ping_servers',
-				'ping_errors',
-				'return',
-				'return_url',
-				'URI',
-				'entry_date'
-
-			);
-
-			foreach ($_POST AS $key => $val)
-			{
-				if(strpos($key, 'field_ft_') !== FALSE) $ignore[] = $key;
-				if(strpos($key, 'field_id_') !== FALSE) $ignore[] = $key;
-			}
-
-			// Init content var
-			$content = '';
-
-			// Loop through posted data, add to content var
-			foreach ($_POST AS $key => $val)
-			{
-				if (in_array($key, $ignore)) continue;
-
-				$content .= $val . "\n";
-			}
-
-			$this->input = array(
-				'user_ip'				=> $this->EE->session->userdata['ip_address'],
-				'user_agent'			=> $this->EE->session->userdata['user_agent'],
-				'comment_author'		=> $this->EE->input->get_post('username'),
-				'comment_author_email'	=> $this->EE->input->get_post('email'),
-				'comment_author_url'	=> $this->EE->input->get_post('url'),
-				'comment_content'		=> $content
-			);
-
-			// Check it!
-			if ($this->is_spam())
-			{
-				// Exit if spam
-				$this->abort();
-			}
-		}
-
-		//this needs to be returned either way
-		return $last_call;
-
-	}
-
-
-	/**
-	 * Checks if given array is a spammy one
-	 *
-	 * @param	array
-	 * @return	bool
-	 */
-	function is_spam($array = array())
-	{
-		// Fallback
-		if (empty($array) && isset($this->input))
-		{
-			$array = $this->input;
-		}
-
-		// initiate nospam lib
-		if ( ! $this->EE->low_nospam->set_service($this->settings['service'], $this->settings['api_key']) )
-		{
-			$this->error = 'service_not_found';
+			// Exit if spam
 			$this->abort();
 		}
+	}
 
-		// check connectivity
-		if ( ! $this->EE->low_nospam->is_available() )
-		{
-			$this->error = 'service_unreachable';
-			return ($this->settings['moderate_if_unreachable'] == 'y');
-		}
+	// --------------------------------------------------------------------
 
-		// check api key
-		if ( ! $this->EE->low_nospam->key_is_valid() )
-		{
-			$this->error = 'invalid_api_key';
-			$this->abort();
-		}
+	/**
+	 * See if we're checking
+	 */
+	private function _check_prerequisites($which)
+	{
+		// Valid key?
+		if ( ! $this->settings['key_is_valid']) return FALSE;
 
-		// set data to check
-		$this->EE->low_nospam->prep_data($array);
+		// Check member?
+		$member_group = $this->EE->session->userdata['group_id'];
+		if ($member_group && in_array($member_group, $this->settings['check_members'])) return FALSE;
 
-		// get verdict
-		return $this->EE->low_nospam->is_spam();
+		// Check settings
+		if (@$this->settings[$which] != 'y') return FALSE;
+
+		return TRUE;
 	}
 
 	// --------------------------------------------------------------------
@@ -825,65 +549,23 @@ class Low_nospam_ext
 	// --------------------------------------------------------------------
 
 	/**
-	 * Check if current user needs to be checked
-	 *
-	 * @return	bool
-	 */
-	function _check_user()
-	{
-		// Don't check if we don't have to check logged-in members
-		if ($this->settings['check_members'] == 'n' AND $this->EE->session->userdata['member_id'] != 0)
-		{
-			$do_check = FALSE;
-		}
-		// Don't check if user is not in selected member groups
-		elseif (is_array($this->settings['check_members']) AND !in_array($this->EE->session->userdata['group_id'], $this->settings['check_members']))
-		{
-			$do_check = FALSE;
-		}
-		// Every other case, perform check
-		else
-		{
-			$do_check = TRUE;
-		}
-
-		return $do_check;
-	}
-
-	// --------------------------------------------------------------------
-
-	/**
 	 * Mark given comments as either spam or ham
-	 *
-	 * @param	array	the comment ids to mark
-	 * @param	string	'spam' or 'ham'
-	 * @return	void
 	 */
-	function _mark($comment_ids = array(), $as = 'spam')
+	private function _mark($comment_ids = array(), $as = 'spam')
 	{
-		// Set service and api key
-		if ( ! $this->EE->low_nospam->set_service($this->settings['service'], $this->settings['api_key']))
-		{
-			// Show user error: service not found
-			show_error('Service not found');
-		}
-
-		// compose where part of query
-		$sql_where = "comment_id IN ('".implode("','", $comment_ids)."')";
+		$select = array(
+			'ip_address AS user_ip',
+			'name       AS comment_author',
+			'email      AS comment_author_email',
+			'url        AS comment_author_url',
+			'comment    AS comment_content'
+		);
 
 		// Compose query, service-friendy
-		$sql = "SELECT
-				ip_address	AS user_ip,
-				name		AS comment_author,
-				email		AS comment_author_email,
-				url			AS comment_author_url,
-				comment		AS comment_content
-			FROM
-				`exp_comments`
-			WHERE
-				{$sql_where}
-		";
-		$query = $this->EE->db->query($sql);
+		$query = $this->EE->db->select($select)
+		       ->from('comments')
+		       ->where_in('comment_id', $comment_ids)
+		       ->get();
 
 		// Determine method
 		$method = ($as == 'spam') ? 'mark_as_spam' : 'mark_as_ham';
@@ -899,242 +581,93 @@ class Low_nospam_ext
 
 	/**
 	 * Activate extension
-	 *
-	 * @return	null
 	 */
 	function activate_extension()
 	{
-		// Hooks to insert
-		$hooks = array(
-			'sessions_start',
-			'insert_comment_insert_array',
-			'delete_comment_additional',
-			'forum_submit_post_start',
-			'edit_wiki_article_end',
-			'member_member_register_start',
-			'freeform_module_validate_end',
-			'user_register_error_checking',
-			'zoo_visitor_register_validation_start'
-		);
-
-		// insert hooks and methods
-		foreach ($hooks AS $hook)
+		foreach ($this->hooks AS $hook)
 		{
-			// data to insert
-			$data = array(
-				'class'		=> $this->class_name,
-				'method'	=> $hook,
-				'hook'		=> $hook,
-				'priority'	=> 1,
-				'version'	=> LOW_NOSPAM_VERSION,
-				'enabled'	=> 'y',
-				'settings'	=> serialize($this->default_settings)
-			);
-
-			// insert in database
-			$this->EE->db->insert('exp_extensions', $data);
+			$this->_add_hook($hook);
 		}
-
 	}
-
-	// --------------------------------------------------------------------
-
-	/**
-	 * Update extension
-	 *
-	 * @param	string	$current
-	 * @return	null
-	 */
-	function update_extension($current = '')
-	{
-		if ($current == '' OR $current == $this->version)
-		{
-			return FALSE;
-		}
-
-		// Upate to version 2.1.1
-		// - Add member registration check
-		if ($current < '2.1.1')
-		{
-			// Get current settings
-			$settings = $this->_get_current_settings();
-
-			// Add new record to settings
-			$settings['check_member_registrations'] = 'n';
-			$new_settings = $this->EE->db->escape_str(serialize($settings));
-
-			// save new settings to DB
-			$this->EE->db->query("UPDATE exp_extensions SET settings = '{$new_settings}' WHERE class = '".$this->class_name."'");
-
-			// Add new hook
-			$this->EE->db->insert(
-				'exp_extensions', array(
-					'extension_id'	=> '',
-					'class'			=> $this->class_name,
-					'method'		=> 'member_member_register_start',
-					'hook'			=> 'member_member_register_start',
-					'settings'		=> $new_settings,
-					'priority'		=> 1,
-					'version'		=> $this->version,
-					'enabled'		=> 'y'
-				)
-			); // end db->insert
-		}
-
-		// Upate to version 2.2.0
-		// - Remove module
-		// - Add delete_comment_additional hook
-		// - Add sessions_start hook
-		// - Add caught_comments setting
-		if ($current < '2.2.0')
-		{
-			// Remove module
-			$this->EE->db->where('module_name', ucfirst(LOW_NOSPAM_PACKAGE));
-			$this->EE->db->delete('modules');
-
-			// Add settings
-			// Get current settings
-			$settings = $this->_get_current_settings();
-
-			// Add new record to settings and save to DB
-			unset($settings['discard_comments']);
-			$settings['caught_comments'] = 'p';
-			$settings['zero_tolerance'] = 'n';
-			$this->EE->db->where('class', $this->class_name);
-			$this->EE->db->update('extensions', array('settings' => serialize($settings)));
-
-			// Add new hooks
-			foreach (array('delete_comment_additional', 'sessions_start') AS $new_hook)
-			{
-				$this->EE->db->insert(
-					'exp_extensions', array(
-						'extension_id'	=> '',
-						'class'			=> $this->class_name,
-						'method'		=> $new_hook,
-						'hook'			=> $new_hook,
-						'settings'		=> serialize($settings),
-						'priority'		=> 1,
-						'version'		=> $this->version,
-						'enabled'		=> 'y'
-					)
-				); // end db->insert
-			}
-		}
-
-
-
-		// Upate to version 2.2.1
-		// - Add Solspace Freeform hook
-		// - Add Solspace User Hook
-		// - Add Freeform and User settings
-		if ($current < '2.2.1')
-		{
-
-			// Get current settings
-			$settings = $this->_get_current_settings();
-
-			// Add new record to settings and save to DB
-			$settings['check_freeform_entries'] = 'n';
-			$settings['check_ss_user_register'] = 'n';
-
-			$this->EE->db->where('class', $this->class_name);
-			$this->EE->db->update('extensions', array('settings' => serialize($settings)));
-
-
-			// Add new hooks
-			foreach (array('freeform_module_validate_end', 'user_register_error_checking') AS $new_hook)
-			{
-
-				// Add new hooks
-				$this->EE->db->insert(
-					'exp_extensions', array(
-						'extension_id'	=> '',
-						'class'			=> $this->class_name,
-						'method'		=> $new_hook,
-						'hook'			=> $new_hook,
-						'settings'		=> serialize($settings),
-						'priority'		=> 1,
-						'version'		=> $this->version,
-						'enabled'		=> 'y'
-					)
-				); // end db->insert
-			}
-		}
-
-
-
-		// Upate to version 2.2.3
-		// - Add Zoo Visitor registration hook
-		// - Add Zoo Visitor settings
-		if ($current < '2.2.3')
-		{
-			// Get current settings
-			$settings = $this->_get_current_settings();
-
-			// Add new record to settings and save to DB
-			$settings['check_visitor_registration'] = 'n';
-
-			$this->EE->db->where('class', $this->class_name);
-			$this->EE->db->update('extensions', array('settings' => serialize($settings)));
-
-
-			// Add new hooks
-			foreach (array('zoo_visitor_register_validation_start') AS $new_hook)
-			{
-
-				// Add new hooks
-				$this->EE->db->insert(
-					'exp_extensions', array(
-						'extension_id'	=> '',
-						'class'			=> $this->class_name,
-						'method'		=> $new_hook,
-						'hook'			=> $new_hook,
-						'settings'		=> serialize($settings),
-						'priority'		=> 1,
-						'version'		=> $this->version,
-						'enabled'		=> 'y'
-					)
-				); // end db->insert
-			}
-		}
-		// init data array
-		$data = array();
-
-		// Add version to data array
-		$data['version'] = $this->version;
-
-		// Update records using data array
-		$this->EE->db->where('class', $this->class_name);
-		$this->EE->db->update('exp_extensions', $data);
-	}
-
-	// --------------------------------------------------------------------
 
 	/**
 	 * Disable extension
-	 *
-	 * @return	null
 	 */
 	function disable_extension()
 	{
 		// Delete records
 		$this->EE->db->where('class', $this->class_name);
-		$this->EE->db->delete('exp_extensions');
+		$this->EE->db->delete('extensions');
+	}
+
+	/**
+	 * Update extension
+	 */
+	function update_extension($current = '')
+	{
+		// Bail out if we're good
+		if ($current == '' OR version_compare($current, $this->version) === 0)
+		{
+			return FALSE;
+		}
+
+		// Get current settings
+		$this->settings = array_filter(array_merge(
+			$this->default_settings,
+			$this->settings
+		));
+
+		// Data to update
+		$data = array();
+
+		// Update to 3.0.0
+		if (version_compare($current, '3.0.0', '<'))
+		{
+			// Radical update!
+			$this->disable_extension();
+			$this->enable_extension();
+		}
+
+		// General update stuff
+		if ($data)
+		{
+			// Update records using data array
+			$this->EE->db->where('class', $this->class_name);
+			$this->EE->db->update('extensions', $data);
+		}
 	}
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * Return current settings
-	 *
-	 * @return	array
+	 * Add hook to extensions table
 	 */
-	function _get_current_settings()
+	private function _add_hook($hook)
 	{
-		// Get current settings
-		$query = $this->EE->db->query("SELECT settings FROM exp_extensions WHERE settings != '' AND class = '".$this->class_name."' LIMIT 1");
-		$row = $query->row();
-		return unserialize($row->settings);
+		$this->EE->db->insert('extensions', array(
+			'class'    => $this->class_name,
+			'method'   => $hook,
+			'hook'     => $hook,
+			'settings' => serialize($this->settings),
+			'priority' => 1,
+			'version'  => $this->version,
+			'enabled'  => 'y'
+		));
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Get last call and return it
+	 */
+	private function _get_last_call($arg = NULL)
+	{
+		if ($this->EE->extensions->last_call !== FALSE)
+		{
+			$arg = $this->EE->extensions->last_call;
+		}
+
+		return $arg;
 	}
 
 }

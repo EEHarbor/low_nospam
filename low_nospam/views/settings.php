@@ -34,6 +34,7 @@
 				</td>
 				<td>
 					<input type="text" name="api_key" id="api_key" style="width:220px" value="<?=htmlspecialchars($settings['api_key'])?>" />
+					<span style="font-size:2em"><?=($settings['key_is_valid'] ? '&check;' : '&times;')?></span>
 				</td>
 			</tr>
 			<tr class="<?=((++$i%2)?'odd':'even')?>">
@@ -97,40 +98,6 @@
 					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_member_registrations" value="n"<?php if ($settings['check_member_registrations'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
 				</td>
 			</tr>
-			<?php if ($has_freeform): ?>
-			<tr class="<?=((++$i%2)?'odd':'even')?>">
-				<td>
-					<strong class="label"><?=lang('check_freeform_entries')?></strong>
-				</td>
-				<td>
-					<label style="cursor:pointer"><input type="radio" name="check_freeform_entries" value="y"<?php if ($settings['check_freeform_entries'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
-					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_freeform_entries" value="n"<?php if ($settings['check_freeform_entries'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
-				</td>
-			</tr>
-			<?php endif; ?>
-			<?php if ($has_user): ?>
-			<tr class="<?=((++$i%2)?'odd':'even')?>">
-				<td>
-					<strong class="label"><?=lang('check_ss_user_register')?></strong>
-				</td>
-				<td>
-					<label style="cursor:pointer"><input type="radio" name="check_ss_user_register" value="y"<?php if ($settings['check_ss_user_register'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
-					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_ss_user_register" value="n"<?php if ($settings['check_ss_user_register'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
-				</td>
-			</tr>
-			<?php endif; ?>
-			<?php if ($has_visitor): ?>
-			<tr class="<?=((++$i%2)?'odd':'even')?>">
-				<td>
-					<strong class="label"><?=lang('check_visitor_registration')?></strong>
-				</td>
-				<td>
-					<label style="cursor:pointer"><input type="radio" name="check_visitor_registration" value="y"<?php if ($settings['check_visitor_registration'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
-					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="check_visitor_registration" value="n"<?php if ($settings['check_visitor_registration'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
-				</td>
-			</tr>
-				<?php endif; ?>
-
 			<tr class="<?=((++$i%2)?'odd':'even')?>">
 				<td>
 					<strong class="label"><?=lang('moderate_if_unreachable')?></strong>
@@ -138,16 +105,6 @@
 				<td>
 					<label style="cursor:pointer"><input type="radio" name="moderate_if_unreachable" value="y"<?php if ($settings['moderate_if_unreachable'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
 					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="moderate_if_unreachable" value="n"<?php if ($settings['moderate_if_unreachable'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
-				</td>
-			</tr>
-			<tr class="<?=((++$i%2)?'odd':'even')?>">
-				<td>
-					<strong class="label"><?=lang('zero_tolerance')?></strong>
-					<p><?=lang('zero_tolerance_help')?></p>
-				</td>
-				<td style="vertical-align:top">
-					<label style="cursor:pointer"><input type="radio" name="zero_tolerance" value="y"<?php if ($settings['zero_tolerance'] == 'y'): ?> checked="checked"<?php endif; ?> /> <?=lang('yes')?></label>
-					<label style="cursor:pointer;margin-left:10px"><input type="radio" name="zero_tolerance" value="n"<?php if ($settings['zero_tolerance'] == 'n'): ?> checked="checked"<?php endif; ?> /> <?=lang('no')?></label>
 				</td>
 			</tr>
 		</tbody>
