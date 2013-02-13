@@ -1,22 +1,32 @@
+;
 /**
-* Low NoSpam JavaScript file
-*
-* @package			low-nospam-ee2_addon
-* @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
-* @link				http://gotolow.com/addons/low-nospam
-* @license			http://creativecommons.org/licenses/by-sa/3.0/
-*/
+ * Low NoSpam JavaScript file
+ *
+ * @package        low_nospam
+ * @author         Lodewijk Schutte ~ Low <hi@gotolow.com>
+ * @link           http://gotolow.com/addons/low-nospam
+ */
+
+// Extension Settings
+$(function(){
+
+	var $commentOptions = $('#check_comments_more'),
+		speed = 150;
+
+	if ( ! $commentOptions) return;
+
+	$('input[name=check_comments]').click(function(){
+		if ($(this).attr('value') == 'y') {
+			$commentOptions.slideDown(speed);
+		} else {
+			$commentOptions.slideUp(speed);
+		}
+	});
+
+});
 
 $(function(){
 
-	// Low NoSpam Settings form
-	$('input[name=check_comments]').click(function(){
-		if ($(this).attr('value') == 'y') {
-			$('#check_comments_more').slideDown(150);
-		} else {
-			$('#check_comments_more').slideUp(150);
-		}
-	});
 
 	// Bail out if add-on JS object isn't set
 	if ( typeof LOW == 'undefined' || ! LOW.NoSpam) return;

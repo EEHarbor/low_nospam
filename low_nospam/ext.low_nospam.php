@@ -182,7 +182,7 @@ class Low_nospam_ext {
 		$data = array();
 		$data['settings'] = array_merge($this->default_settings, $current);
 		$data['member_groups'] = $groups;
-		$data['name']      = str_replace('_ext', '', $this->class_name);
+		$data['name']      = $this->package;
 		$data['services']  = $services;
 		$data['has_forum'] = in_array('forum', $installed);
 		$data['has_wiki']  = in_array('wiki', $installed);
@@ -197,7 +197,7 @@ class Low_nospam_ext {
 		// Load view
 		// -------------------------------------
 
-		return $this->EE->load->view('settings', $data, TRUE);
+		return $this->EE->load->view('ext_settings', $data, TRUE);
 	}
 
 	// --------------------------------------------------------------------
@@ -285,7 +285,43 @@ class Low_nospam_ext {
 	{
 		$js = $this->_get_last_call();
 
+		$this->EE->load->helper('file');
+
+		$file = PATH_THIRD.$this->package.'/javascript/low_nospam.js';
+
+		if (file_exists($file))
+		{
+			$js .= $this->_js();
+			$js .= read_file($file);
+		}
+
 		return $js;
+	}
+
+	private function _js()
+	{
+		$this->EE->lang->loadfile($this->package);
+		$add_marker = ($this->EE->input->post('mark_as_spam')) ? 'true' : 'false';
+		$lang_mark_as_spam = $this->EE->lang->line('mark_as_spam');
+		$lang_mark_as_ham = $this->EE->lang->line('mark_as_ham');
+
+		return <<<EOJS
+
+			if (typeof LOW == 'undefined') {
+				var LOW = new Object;
+			}
+
+			if (typeof LOW.NoSpam == 'undefined') {
+				LOW.NoSpam = new Object;
+			}
+
+			LOW.NoSpam.lang = {
+				"mark_as_spam" : "{$lang_mark_as_spam}",
+				"mark_as_ham" : "{$lang_mark_as_ham}"
+			};
+
+			LOW.NoSpam.add_marker = {$add_marker};
+EOJS;
 	}
 
 	// --------------------------------------------------------------------
@@ -623,6 +659,10 @@ class Low_nospam_ext {
 		// Update to 3.0.0
 		if (version_compare($current, '3.0.0', '<'))
 		{
+			// Remove accessory
+			$this->EE->db->where('class', str_replace('_ext', '_acc', $this->class_name));
+			$this->EE->db->delete('accessories');
+
 			// Radical update!
 			$this->disable_extension();
 			$this->enable_extension();
