@@ -30,41 +30,33 @@ $(function(){
 	// Bail out if add-on JS object isn't set
 	if ( typeof LOW == 'undefined' || ! LOW.NoSpam) return;
 
+	(function(){
+		var $dropdown = $('#comment_action');
+		if ( ! $dropdown.length) return;
+
+		var $ham = $('<label><input type="checkbox" name="mark_as_ham" value="y" /> '+LOW.NoSpam.lang.mark_as_ham+'</label>');
+		$ham.css('margin-left', '10px');
+
+		// switch submit button and dropdown around
+		$dropdown.after($dropdown.prev().css('margin-left','10px')).after($ham);
+
+		var toggle = function() {
+			$ham.hide();
+			if ($dropdown.val() == 'open') $ham.show();
+		};
+
+		$dropdown.change(toggle);
+		toggle();
+	})();
+
 	// Add mark as spam flag to delete comment confirmation page
-	if (LOW.NoSpam.add_marker) {
-		$('input[name=delete_comments]').after('<input type="hidden" name="mark_as_spam" value="y" />');
-	}
-
-	var dropdown = $('#comment_action').get(0);
-	if (!dropdown) return;
-
-	// switch submit button and dropdown around
-	$(dropdown).after($(dropdown).prev().css('margin-left','10px'));
-
-	// Add margin to dropdown
-	$(dropdown).css('margin-right','10px');
-
-	var mark_as_spam = $('<label><input type="checkbox" name="mark_as_spam" value="y" /> '+LOW.NoSpam.lang.mark_as_spam+'</label>');
-	var mark_as_ham  = $('<label><input type="checkbox" name="mark_as_ham" value="y" /> '+LOW.NoSpam.lang.mark_as_ham+'</label>');
-
-	// Add extra options to form
-	$(dropdown).after(mark_as_spam);
-	$(dropdown).after(mark_as_ham);
-
-	var show_nospam_options = function() {
-		$(mark_as_spam).hide();
-		$(mark_as_ham).hide();
-		switch ($(this).val()) {
-			case 'open':
-				$(mark_as_ham).show();
-			break;
-			case 'delete':
-				$(mark_as_spam).show();
-			break;
-		}
-	};
-
-	$(dropdown).change(show_nospam_options);
-	show_nospam_options();
+	(function(){
+		var $spam = $('input[name=delete_comments]').clone();
+		if ( ! $spam.length) return;
+		$spam.attr('value', LOW.NoSpam.lang.mark_as_spam + ' & ' + $spam.attr('value'));
+		$spam.attr('name', 'mark_as_spam');
+		$spam.css('margin-left', '10px');
+		$('input[name=delete_comments]').after($spam);
+	})();
 
 });

@@ -399,7 +399,7 @@ EOJS;
 	 */
 	function delete_comment_additional($comment_ids)
 	{
-		if (ee()->input->post('mark_as_spam') == 'y')
+		if (ee()->input->post('mark_as_spam'))
 		{
 			$this->_mark($comment_ids, 'spam');
 		}
