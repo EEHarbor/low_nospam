@@ -8,7 +8,7 @@ Extension Settings are mostly the same: choose a service, enter an API key (whic
 
 ## Low NoSpam Library
 
-The Low NoSpam Library will be loaded on Sessions Start, so it will be available throughout EE using `$this->EE->low_nospam`. The library stores an internal data array with data to send to the NoSpam service. Available methods:
+The Low NoSpam Library will be loaded on Sessions Start, so it will be available throughout EE using `ee()->low_nospam`. The library stores an internal data array with data to send to the NoSpam service. Available methods:
 
 ### get_services()
 
