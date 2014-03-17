@@ -3,17 +3,12 @@
 /**
  * Low NoSpam Library class
  *
- * @package			low-nospam-ee2_addon
- * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
- * @link				http://gotolow.com/addons/low-nospam
- * @license			http://creativecommons.org/licenses/by-sa/3.0/
+ * @package        low_nospam
+ * @author         Lodewijk Schutte ~ Low <hi@gotolow.com>
+ * @link           http://gotolow.com/addons/low-nospam
+ * @license        http://creativecommons.org/licenses/by-sa/3.0/
  */
 class Low_nospam {
-
-	/**
-	 * EE super object
-	 */
-	private $EE;
 
 	/**
 	 * Available NoSpam services
@@ -28,16 +23,16 @@ class Low_nospam {
 			'port'		=> 80
 		),
 
-		// TypePad AntiSpam details
-		'tpas' => array(
-			'name'		=> 'TypePad AntiSpam',
-			'version'	=> '1.1',
-			'host'		=> 'api.antispam.typepad.com',
-			'port'		=> 80
-		)
+		// TypePad AntiSpam is no longer available
+		// 'tpas' => array(
+		// 	'name'		=> 'TypePad AntiSpam',
+		// 	'version'	=> '1.1',
+		// 	'host'		=> 'api.antispam.typepad.com',
+		// 	'port'		=> 80
+		// )
 
 		// Maybe even more in the future?
-		// They'd have to be compatible with the Akismet API, just like TypePad is...
+		// They'd have to be compatible with the Akismet API, just like TypePad was...
 	);
 
 	/**
@@ -97,26 +92,24 @@ class Low_nospam {
 	private $_post_ignore = array(
 		'ACT',
 		'XID',
+		'csrf_token',
 		'site_id'
 	);
 
 	// --------------------------------------------------------------------
 
 	/**
-	 * PHP 5 Constructor
+	 * Constructor
 	 *
 	 * @return	void
 	 */
 	public function __construct()
 	{
-		// Get global instance
-		$this->EE =& get_instance();
-
 		// set user agent
 		$this->_user_agent = APP_NAME.'/'.APP_VER.' | '.LOW_NOSPAM_NAME.'/'.LOW_NOSPAM_VERSION;
 
 		// set site url
-		$this->_site_url = $this->EE->config->item('site_url');
+		$this->_site_url = ee()->config->item('site_url');
 
 		// if site url is something like '/' or '/weblog', create full path
 		if (substr($this->_site_url, 0, 7) != 'http://')
@@ -168,6 +161,30 @@ class Low_nospam {
 		{
 			return FALSE;
 		}
+	}
+
+	// --------------------------------------------------------------------
+
+	/**
+	 * Add keys to SERVER ignore array
+	 */
+	public function set_server_ignore($key, $force = FALSE)
+	{
+		// Add single string to array
+		if (is_string($key))
+		{
+			$this->_server_ignore[] = $key;
+		}
+		// Add array or replace whole values
+		elseif (is_array($key))
+		{
+			$this->_server_ignore = ($force === TRUE)
+				? $key
+				: array_merge($this->_server_ignore, $key);
+		}
+
+		// Clean up
+		$this->_server_ignore = array_unique(array_filter($this->_server_ignore));
 	}
 
 	// --------------------------------------------------------------------
@@ -243,7 +260,7 @@ class Low_nospam {
 			$request
 				= strtoupper($type)." /{$this->_api['version']}/{$path} HTTP/1.0\r\n"
 				. "Host: {$host}\r\n"
-				. "Content-Type: application/x-www-form-urlencoded; charset=".$this->EE->config->item('charset')."\r\n"
+				. "Content-Type: application/x-www-form-urlencoded; charset=".ee()->config->item('charset')."\r\n"
 				. "Content-Length: ".strlen($request)."\r\n"
 				. "User-Agent: {$this->_user_agent}\r\n"
 				. "\r\n"
@@ -345,7 +362,7 @@ class Low_nospam {
 		// Default required
 		$req = array(
 			'blog'       => $this->_site_url,
-			'user_ip'    => $this->EE->input->ip_address(),
+			'user_ip'    => ee()->input->ip_address(),
 			'user_agent' => $_SERVER['HTTP_USER_AGENT']
 		);
 

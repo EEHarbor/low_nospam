@@ -27,7 +27,6 @@ $(function(){
 
 $(function(){
 
-
 	// Bail out if add-on JS object isn't set
 	if ( typeof LOW == 'undefined' || ! LOW.NoSpam) return;
 

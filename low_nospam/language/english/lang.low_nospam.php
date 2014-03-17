@@ -3,7 +3,7 @@
 /**
 * Low NoSpam Language file
 *
-* @package			low-nospam-ee2_addon
+* @package			low_nospam
 * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
 * @link				http://gotolow.com/addons/low-nospam
 * @license			http://creativecommons.org/licenses/by-sa/3.0/

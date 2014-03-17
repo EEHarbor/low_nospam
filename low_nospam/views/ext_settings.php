@@ -1,8 +1,5 @@
-<form method="post" action="<?=BASE?>&amp;D=cp&amp;C=addons_extensions&amp;M=save_extension_settings">
-	<div>
-		<input type="hidden" name="file" value="<?=strtolower($name)?>" />
-		<input type="hidden" name="XID" value="<?=XID_SECURE_HASH?>" />
-	</div>
+<?=form_open('C=addons_extensions&amp;M=save_extension_settings&amp;file='.LOW_NOSPAM_PACKAGE)?>
+
 	<table cellpadding="0" cellspacing="0" style="width:100%" class="mainTable">
 		<colgroup>
 			<col style="width:50%" />
@@ -34,7 +31,7 @@
 				</td>
 				<td>
 					<input type="text" name="api_key" id="api_key" style="width:220px" value="<?=htmlspecialchars($settings['api_key'])?>" />
-					<span style="font-size:2em"><?=($settings['key_is_valid'] ? '&check;' : '&times;')?></span>
+					<span style="style:inline-block;vertical-align:middle;font-size:1.5em;line-height:1;margin-left:5px"><?=($settings['key_is_valid'] ? '&check;' : '&times;')?></span>
 				</td>
 			</tr>
 			<tr class="<?=((++$i%2)?'odd':'even')?>">

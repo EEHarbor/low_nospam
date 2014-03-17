@@ -30,6 +30,10 @@ Currently selected service (array).
 
 Currently selected service short name (string).
 
+### set_server_ignore($key, $force)
+
+Add keys to the internal server_ignore array. Each of those keys of the `$_SERVER` superglobal will not be sent along to the service. If a string is given, it will be added to the array. If an array is given, the whole array is added. If the `$force` flag is set to `TRUE`, the whole array will be replaced.
+
 ### set_member_groups($ids)
 
 Used to set member group IDs that were set by the user in the Extension Settings.

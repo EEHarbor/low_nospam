@@ -6,10 +6,10 @@ include(PATH_THIRD.'low_nospam/config.php');
 /**
  * Low NoSpam Extension class
  *
- * @package			low_nospam
- * @author			Lodewijk Schutte ~ Low <hi@gotolow.com>
- * @link			http://gotolow.com/addons/low-nospam
- * @license			http://creativecommons.org/licenses/by-sa/3.0/
+ * @package        low_nospam
+ * @author         Lodewijk Schutte ~ Low <hi@gotolow.com>
+ * @link           http://gotolow.com/addons/low-nospam
+ * @license        http://creativecommons.org/licenses/by-sa/3.0/
  */
 class Low_nospam_ext {
 
@@ -39,7 +39,7 @@ class Low_nospam_ext {
 	 *
 	 * @var	string
 	 */
-	public $description = 'Fight spam on your site by using the Akismet or TypePad AntiSpam service';
+	public $description = 'Fight spam on your site by using the Akismet service';
 
 	/**
 	 * Do settings exist?
@@ -108,12 +108,9 @@ class Low_nospam_ext {
 	 */
 	public function __construct($settings = array())
 	{
-		//  Get global instance
-		$this->EE =& get_instance();
-
 		//  Load Low NoSpam Library
-		$this->EE->load->add_package_path(PATH_THIRD.$this->package);
-		$this->EE->load->library($this->package);
+		ee()->load->add_package_path(PATH_THIRD.$this->package);
+		ee()->load->library($this->package);
 
 		// Set extension class name
 		$this->class_name = ucfirst(get_class($this));
@@ -132,7 +129,7 @@ class Low_nospam_ext {
 	 */
 	public function settings_form($current)
 	{
-		$this->EE->cp->load_package_js($this->package);
+		ee()->cp->load_package_js($this->package);
 
 		// -------------------------------------
 		//  Get Services from library file
@@ -140,7 +137,7 @@ class Low_nospam_ext {
 
 		$services = array();
 
-		foreach(array_keys($this->EE->low_nospam->get_services()) AS $key)
+		foreach(array_keys(ee()->low_nospam->get_services()) AS $key)
 		{
 			$services[$key] = $key;
 		}
@@ -149,7 +146,7 @@ class Low_nospam_ext {
 		// Get member groups
 		// -------------------------------------
 
-		$query = $this->EE->db->select('group_id, group_title')
+		$query = ee()->db->select('group_id, group_title')
 		       ->from('member_groups')
 		       ->order_by('group_title')
 		       ->get();
@@ -173,7 +170,7 @@ class Low_nospam_ext {
 		// Get list of installed modules
 		// -------------------------------------
 
-		$installed = $this->EE->cp->get_installed_modules();
+		$installed = ee()->cp->get_installed_modules();
 
 		// -------------------------------------
 		// Define settings array for display
@@ -191,13 +188,13 @@ class Low_nospam_ext {
 		// Build output
 		// -------------------------------------
 
-		$this->EE->cp->set_breadcrumb('#', LOW_NOSPAM_NAME);
+		ee()->cp->set_breadcrumb('#', LOW_NOSPAM_NAME);
 
 		// -------------------------------------
 		// Load view
 		// -------------------------------------
 
-		return $this->EE->load->view('ext_settings', $data, TRUE);
+		return ee()->load->view('ext_settings', $data, TRUE);
 	}
 
 	// --------------------------------------------------------------------
@@ -214,7 +211,7 @@ class Low_nospam_ext {
 		foreach ($this->default_settings AS $setting => $default_value)
 		{
 			// Check posted values, fallback to default value
-			if (($value = $this->EE->input->post($setting)) === FALSE)
+			if (($value = ee()->input->post($setting)) === FALSE)
 			{
 				$value = $default_value;
 			}
@@ -224,19 +221,19 @@ class Low_nospam_ext {
 		}
 
 		// Set service
-		$this->EE->low_nospam->set_service(
+		ee()->low_nospam->set_service(
 			$settings['service'],
 			$settings['api_key']
 		);
 
 		// Check key validity
-		$settings['key_is_valid'] = $this->EE->low_nospam->key_is_valid();
+		$settings['key_is_valid'] = ee()->low_nospam->key_is_valid();
 
 		// Update new settings
-		$this->EE->db->where('class', $this->class_name);
-		$this->EE->db->update('extensions', array('settings' => serialize($settings)));
+		ee()->db->where('class', $this->class_name);
+		ee()->db->update('extensions', array('settings' => serialize($settings)));
 
-		$this->EE->functions->redirect($_SERVER['HTTP_REFERER']);
+		ee()->functions->redirect($_SERVER['HTTP_REFERER']);
 	}
 
 	// --------------------------------------------------------------------
@@ -248,31 +245,31 @@ class Low_nospam_ext {
 	 * @param      object
 	 * @return     object
 	 */
-	public function sessions_start(&$session)
+	public function sessions_start($session)
 	{
 		// -------------------------------------
 		//  Initiate NoSpam Service
 		// -------------------------------------
 
-		$this->EE->low_nospam->set_service(
+		ee()->low_nospam->set_service(
 			$this->settings['service'],
 			$this->settings['api_key']
 		);
 
 		// Set member groups so others can get to it easily
-		$this->EE->low_nospam->set_member_groups($this->settings['check_members']);
+		ee()->low_nospam->set_member_groups($this->settings['check_members']);
 
 		// -------------------------------------
 		//  Mark as ham only if opening comments and checking the box
 		// -------------------------------------
 
 		if ((REQ == 'CP') &&
-			($this->EE->input->get('method') == 'modify_comments') &&
-			($this->EE->input->post('action') == 'open') &&
-			($this->EE->input->post('mark_as_ham') == 'y') &&
-			($this->EE->input->post('toggle') !== FALSE))
+			(ee()->input->get('method') == 'modify_comments') &&
+			(ee()->input->post('action') == 'open') &&
+			(ee()->input->post('mark_as_ham') == 'y') &&
+			(ee()->input->post('toggle') !== FALSE))
 		{
-			$this->_mark($this->EE->input->post('toggle'), 'ham');
+			$this->_mark(ee()->input->post('toggle'), 'ham');
 		}
 
 		return $session;
@@ -285,7 +282,7 @@ class Low_nospam_ext {
 	{
 		$js = $this->_get_last_call();
 
-		$this->EE->load->helper('file');
+		ee()->load->helper('file');
 
 		$file = PATH_THIRD.$this->package.'/javascript/low_nospam.js';
 
@@ -300,10 +297,10 @@ class Low_nospam_ext {
 
 	private function _js()
 	{
-		$this->EE->lang->loadfile($this->package);
-		$add_marker = ($this->EE->input->post('mark_as_spam')) ? 'true' : 'false';
-		$lang_mark_as_spam = $this->EE->lang->line('mark_as_spam');
-		$lang_mark_as_ham = $this->EE->lang->line('mark_as_ham');
+		ee()->lang->loadfile($this->package);
+		$add_marker = (ee()->input->post('mark_as_spam')) ? 'true' : 'false';
+		$lang_mark_as_spam = ee()->lang->line('mark_as_spam');
+		$lang_mark_as_ham = ee()->lang->line('mark_as_ham');
 
 		return <<<EOJS
 
@@ -347,7 +344,7 @@ EOJS;
 		if ($this->_check_prerequisites('check_comments'))
 		{
 			// Set data to check
-			$this->EE->low_nospam->set_data(array(
+			ee()->low_nospam->set_data(array(
 				'comment_author'       => $data['name'],
 				'comment_author_email' => $data['email'],
 				'comment_author_url'   => $data['url'],
@@ -357,10 +354,10 @@ EOJS;
 			));
 
 			// Check if service is available
-			// if ( ! $this->EE->low_nospam->is_available()) return FALSE;
+			// if ( ! ee()->low_nospam->is_available()) return FALSE;
 
 			// Check it!
-			if ($this->EE->low_nospam->is_spam())
+			if (ee()->low_nospam->is_spam())
 			{
 				// -------------------------------------
 				//  discard message (exit without saving)
@@ -377,7 +374,7 @@ EOJS;
 					$data['status'] = $this->settings['caught_comments'];
 
 					// insert closed comment to DB
-					$this->EE->db->insert('comments', $data);
+					ee()->db->insert('comments', $data);
 
 					// Set error message if not already set
 					if (empty($this->error))
@@ -402,7 +399,7 @@ EOJS;
 	 */
 	function delete_comment_additional($comment_ids)
 	{
-		if ($this->EE->input->post('mark_as_spam') == 'y')
+		if (ee()->input->post('mark_as_spam') == 'y')
 		{
 			$this->_mark($comment_ids, 'spam');
 		}
@@ -424,17 +421,17 @@ EOJS;
 		if ( ! $this->_check_prerequisites('check_forum_posts')) return $obj;
 
 		// input array
-		$this->EE->low_nospam->set_data(array(
-			'user_ip'				=> $this->EE->input->ip_address(),
-			'user_agent'			=> $this->EE->session->userdata['user_agent'],
-			'comment_author'		=> (strlen($this->EE->session->userdata['screen_name']) ? $this->EE->session->userdata['screen_name'] : $this->EE->session->userdata['username']),
-			'comment_author_email'	=> $this->EE->session->userdata['email'],
-			'comment_author_url'	=> $this->EE->session->userdata['url'],
-			'comment_content'		=> ($this->EE->input->post('title') ? $this->EE->input->post('title')."\n\n" : '').$this->EE->input->post('body')
+		ee()->low_nospam->set_data(array(
+			'user_ip'				=> ee()->input->ip_address(),
+			'user_agent'			=> ee()->session->userdata['user_agent'],
+			'comment_author'		=> (strlen(ee()->session->userdata['screen_name']) ? ee()->session->userdata['screen_name'] : ee()->session->userdata['username']),
+			'comment_author_email'	=> ee()->session->userdata['email'],
+			'comment_author_url'	=> ee()->session->userdata['url'],
+			'comment_content'		=> (ee()->input->post('title') ? ee()->input->post('title')."\n\n" : '').ee()->input->post('body')
 		));
 
 		// Check it!
-		if ($this->EE->low_nospam->is_spam())
+		if (ee()->low_nospam->is_spam())
 		{
 			// Set error message if not already set
 			if ( ! $this->error )
@@ -461,29 +458,29 @@ EOJS;
 		// Bail out?
 		if ( ! $this->_check_prerequisites('check_wiki_articles')) return $query;
 
-		$this->EE->low_nospam->set_data(array(
-			'user_ip'				=> $this->EE->input->ip_address(),
-			'user_agent'			=> $this->EE->session->userdata['user_agent'],
-			'comment_author'		=> (strlen($this->EE->session->userdata['screen_name']) ? $this->EE->session->userdata['screen_name'] : $this->EE->session->userdata['username']),
-			'comment_author_email'	=> $this->EE->session->userdata['email'],
-			'comment_author_url'	=> $this->EE->session->userdata['url'],
-			'comment_content'		=> $this->EE->input->post('title').' '.$this->EE->input->post('article_content')
+		ee()->low_nospam->set_data(array(
+			'user_ip'				=> ee()->input->ip_address(),
+			'user_agent'			=> ee()->session->userdata['user_agent'],
+			'comment_author'		=> (strlen(ee()->session->userdata['screen_name']) ? ee()->session->userdata['screen_name'] : ee()->session->userdata['username']),
+			'comment_author_email'	=> ee()->session->userdata['email'],
+			'comment_author_url'	=> ee()->session->userdata['url'],
+			'comment_content'		=> ee()->input->post('title').' '.ee()->input->post('article_content')
 		));
 
 		// Check it!
-		if ($this->EE->low_nospam->is_spam())
+		if (ee()->low_nospam->is_spam())
 		{
 			// HANDLE WIKI ARTICLE SPAM
 			$wiki_id = $obj->wiki_id;
-			$page_id = $this->EE->db->escape_str($query->row['page_id']);
+			$page_id = ee()->db->escape_str($query->row['page_id']);
 
 			// get real last revision id
-			$query  = $this->EE->db->query("SELECT last_revision_id FROM exp_wiki_page WHERE wiki_id = {$wiki_id} AND page_id = {$page_id}");
+			$query  = ee()->db->query("SELECT last_revision_id FROM exp_wiki_page WHERE wiki_id = {$wiki_id} AND page_id = {$page_id}");
 			$row    = $query->row_array();
 			$rev_id = $row['last_revision_id'];
 
 			// close revision
-			$this->EE->db->query("UPDATE exp_wiki_revisions SET revision_status = 'closed' WHERE wiki_id = {$wiki_id} AND page_id = {$page_id} AND revision_id = {$rev_id}");
+			ee()->db->query("UPDATE exp_wiki_revisions SET revision_status = 'closed' WHERE wiki_id = {$wiki_id} AND page_id = {$page_id} AND revision_id = {$rev_id}");
 
 			$this->abort();
 		}
@@ -518,17 +515,17 @@ EOJS;
 			$content .= $val . "\n";
 		}
 
-		$this->EE->low_nospam->set_data(array(
-			'user_ip'				=> $this->EE->input->ip_address(),
-			'user_agent'			=> $this->EE->session->userdata['user_agent'],
-			'comment_author'		=> $this->EE->input->post('username'),
-			'comment_author_email'	=> $this->EE->input->post('email'),
-			'comment_author_url'	=> $this->EE->input->post('url'),
+		ee()->low_nospam->set_data(array(
+			'user_ip'				=> ee()->input->ip_address(),
+			'user_agent'			=> ee()->session->userdata['user_agent'],
+			'comment_author'		=> ee()->input->post('username'),
+			'comment_author_email'	=> ee()->input->post('email'),
+			'comment_author_url'	=> ee()->input->post('url'),
 			'comment_content'		=> $content
 		));
 
 		// Check it!
-		if ($this->EE->low_nospam->is_spam())
+		if (ee()->low_nospam->is_spam())
 		{
 			// Set error message if not already set
 			if (empty($this->error))
@@ -552,7 +549,7 @@ EOJS;
 		if ( ! $this->settings['key_is_valid']) return FALSE;
 
 		// Check member?
-		$member_group = $this->EE->session->userdata['group_id'];
+		$member_group = ee()->session->userdata['group_id'];
 		if ($member_group && in_array($member_group, $this->settings['check_members'])) return FALSE;
 
 		// Check settings
@@ -571,14 +568,14 @@ EOJS;
 	 */
 	function abort($msg = '')
 	{
-		$this->EE->extensions->end_script = TRUE;
-		$this->EE->lang->loadfile('low_nospam');
+		ee()->extensions->end_script = TRUE;
+		ee()->lang->loadfile('low_nospam');
 
 		// get error msg
 		$line = ($msg) ? $msg : $this->error;
 
 		// show error message
-		$this->EE->output->show_user_error('submission', $this->EE->lang->line($line));
+		ee()->output->show_user_error('submission', ee()->lang->line($line));
 		exit;
 	}
 
@@ -598,7 +595,7 @@ EOJS;
 		);
 
 		// Compose query, service-friendy
-		$query = $this->EE->db->select($select)
+		$query = ee()->db->select($select)
 		       ->from('comments')
 		       ->where_in('comment_id', $comment_ids)
 		       ->get();
@@ -609,7 +606,7 @@ EOJS;
 		// send each one to service
 		foreach ($query->result_array() AS $row)
 		{
-			$this->EE->low_nospam->$method($row);
+			ee()->low_nospam->$method($row);
 		}
 	}
 
@@ -632,8 +629,8 @@ EOJS;
 	function disable_extension()
 	{
 		// Delete records
-		$this->EE->db->where('class', $this->class_name);
-		$this->EE->db->delete('extensions');
+		ee()->db->where('class', $this->class_name);
+		ee()->db->delete('extensions');
 	}
 
 	/**
@@ -660,8 +657,8 @@ EOJS;
 		if (version_compare($current, '3.0.0', '<'))
 		{
 			// Remove accessory
-			$this->EE->db->where('class', str_replace('_ext', '_acc', $this->class_name));
-			$this->EE->db->delete('accessories');
+			ee()->db->where('class', str_replace('_ext', '_acc', $this->class_name));
+			ee()->db->delete('accessories');
 
 			// Radical update!
 			$this->disable_extension();
@@ -672,8 +669,8 @@ EOJS;
 		if ($data)
 		{
 			// Update records using data array
-			$this->EE->db->where('class', $this->class_name);
-			$this->EE->db->update('extensions', $data);
+			ee()->db->where('class', $this->class_name);
+			ee()->db->update('extensions', $data);
 		}
 	}
 
@@ -684,7 +681,7 @@ EOJS;
 	 */
 	private function _add_hook($hook)
 	{
-		$this->EE->db->insert('extensions', array(
+		ee()->db->insert('extensions', array(
 			'class'    => $this->class_name,
 			'method'   => $hook,
 			'hook'     => $hook,
@@ -702,9 +699,9 @@ EOJS;
 	 */
 	private function _get_last_call($arg = NULL)
 	{
-		if ($this->EE->extensions->last_call !== FALSE)
+		if (ee()->extensions->last_call !== FALSE)
 		{
-			$arg = $this->EE->extensions->last_call;
+			$arg = ee()->extensions->last_call;
 		}
 
 		return $arg;
