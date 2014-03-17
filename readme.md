@@ -12,7 +12,7 @@ The Low NoSpam Library will be loaded on Sessions Start, so it will be available
 
 ### get_services()
 
-A nested array of available services. Currently Akismet and TypePad AntiSpam.
+A nested array of available services. Currently only Akismet.
 
 ### set_service($name, $key)
 

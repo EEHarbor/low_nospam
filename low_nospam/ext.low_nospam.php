@@ -498,11 +498,11 @@ EOJS;
 	function member_member_register_start()
 	{
 		// Bail out if prerequisites aren't met
-		if ( ! $this->_check_prerequisites()) return;
+		if ( ! $this->_check_prerequisites('check_member_registrations')) return;
 
 		// Don't send these values to the service
 		$ignore = array('password', 'password_confirm', 'rules', 'email' , 'url', 'username',
-						'XID', 'ACT', 'RET', 'FROM', 'site_id', 'accept_terms');
+						'XID', 'csrf_token', 'ACT', 'RET', 'FROM', 'site_id', 'accept_terms');
 
 		// Init content var
 		$content = '';
@@ -550,7 +550,7 @@ EOJS;
 
 		// Check member?
 		$member_group = ee()->session->userdata['group_id'];
-		if ($member_group && in_array($member_group, $this->settings['check_members'])) return FALSE;
+		if ($member_group && ! in_array($member_group, $this->settings['check_members'])) return FALSE;
 
 		// Check settings
 		if (@$this->settings[$which] != 'y') return FALSE;

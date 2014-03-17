@@ -374,7 +374,7 @@ class Low_nospam {
 		{
 			if ( ! array_key_exists($key, $this->_data))
 			{
-				$this->set_data($key, $value);
+				$this->set_data($key, $val);
 			}
 		}
 	}
