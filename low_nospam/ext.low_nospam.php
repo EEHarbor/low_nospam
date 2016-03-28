@@ -343,15 +343,19 @@ EOJS;
 
 		if ($this->_check_prerequisites('check_comments'))
 		{
-			// Set data to check
-			ee()->low_nospam->set_data(array(
+			$spam_check_args = array(
 				'comment_author'       => $data['name'],
 				'comment_author_email' => $data['email'],
 				'comment_author_url'   => $data['url'],
 				'comment_content'      => $data['comment'],
 				'user_ip'              => $data['ip_address'],
 				'comment_type'         => 'comment'
-			));
+			);
+			
+			$spam_check_args = array_merge($this->get_environmental_variables(), $spam_check_args);
+			
+			// Set data to check
+			ee()->low_nospam->set_data($spam_check_args);
 
 			// Check if service is available
 			// if ( ! ee()->low_nospam->is_available()) return FALSE;
@@ -420,15 +424,20 @@ EOJS;
 		// Bail out if prerequisites aren't met
 		if ( ! $this->_check_prerequisites('check_forum_posts')) return $obj;
 
-		// input array
-		ee()->low_nospam->set_data(array(
+		$spam_check_args = array(
 			'user_ip'				=> ee()->input->ip_address(),
 			'user_agent'			=> ee()->session->userdata['user_agent'],
 			'comment_author'		=> (strlen(ee()->session->userdata['screen_name']) ? ee()->session->userdata['screen_name'] : ee()->session->userdata['username']),
 			'comment_author_email'	=> ee()->session->userdata['email'],
 			'comment_author_url'	=> ee()->session->userdata['url'],
-			'comment_content'		=> (ee()->input->post('title') ? ee()->input->post('title')."\n\n" : '').ee()->input->post('body')
-		));
+			'comment_content'		=> (ee()->input->post('title') ? ee()->input->post('title')."\n\n" : '').ee()->input->post('body'),
+			'comment_type'			=> 'forum-post',
+		);
+
+		$spam_check_args = array_merge($this->get_environmental_variables(), $spam_check_args);
+
+		// input array
+		ee()->low_nospam->set_data($spam_check_args);
 
 		// Check it!
 		if (ee()->low_nospam->is_spam())
@@ -458,14 +467,19 @@ EOJS;
 		// Bail out?
 		if ( ! $this->_check_prerequisites('check_wiki_articles')) return $query;
 
-		ee()->low_nospam->set_data(array(
+		$spam_check_args = array(
 			'user_ip'				=> ee()->input->ip_address(),
 			'user_agent'			=> ee()->session->userdata['user_agent'],
 			'comment_author'		=> (strlen(ee()->session->userdata['screen_name']) ? ee()->session->userdata['screen_name'] : ee()->session->userdata['username']),
 			'comment_author_email'	=> ee()->session->userdata['email'],
 			'comment_author_url'	=> ee()->session->userdata['url'],
-			'comment_content'		=> ee()->input->post('title').' '.ee()->input->post('article_content')
-		));
+			'comment_content'		=> ee()->input->post('title').' '.ee()->input->post('article_content'),
+			'comment_type'			=> 'wiki-revision',
+		);
+
+		$spam_check_args = array_merge($this->get_environmental_variables(), $spam_check_args);
+
+		ee()->low_nospam->set_data($spam_check_args);
 
 		// Check it!
 		if (ee()->low_nospam->is_spam())
@@ -515,15 +529,20 @@ EOJS;
 			$content .= $val . "\n";
 		}
 
-		ee()->low_nospam->set_data(array(
+		$spam_check_args = array(
 			'user_ip'				=> ee()->input->ip_address(),
 			'user_agent'			=> ee()->session->userdata['user_agent'],
 			'comment_author'		=> ee()->input->post('username'),
 			'comment_author_email'	=> ee()->input->post('email'),
 			'comment_author_url'	=> ee()->input->post('url'),
-			'comment_content'		=> $content
-		));
+			'comment_content'		=> $content,
+			'comment_type'			=> 'signup',
+		);
+		
+		$spam_check_args = array_merge($this->get_environmental_variables(), $spam_check_args);
 
+		ee()->low_nospam->set_data($spam_check_args);
+		
 		// Check it!
 		if (ee()->low_nospam->is_spam())
 		{
@@ -705,6 +724,35 @@ EOJS;
 		}
 
 		return $arg;
+	}
+	
+	/**
+	 * Get the environmental variables requested by Akismet.
+	 * @see https://akismet.com/development/api/#comment-check
+	 */
+	private function get_environmental_variables()
+	{
+		$environmental_vars = array();
+		
+		foreach ($_SERVER as $key => $value)
+		{
+			if (!is_string($value))
+			{
+				continue;
+			}
+
+			if (preg_match("/^HTTP_COOKIE/", $key))
+			{
+				continue;
+			}
+
+			if (preg_match("/^(HTTP_|REMOTE_ADDR|REQUEST_URI|DOCUMENT_URI)/", $key))
+			{
+				$environmental_vars["$key"] = $value;
+			}
+		}
+		
+		return $environmental_vars;
 	}
 
 }
